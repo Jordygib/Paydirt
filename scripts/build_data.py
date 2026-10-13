@@ -328,6 +328,7 @@ def player_table(use, rosters, rr, tr, season):
             rush=r1(r["rush"] / games), rushYd=r1(r["rushYd"] / games), td=int(r["rtd"] + r["ctd"]),
             trend=int(trend), passYd=r1(r["passYd"] / games) if pos == "QB" else 0, att=r["att"] / games,
             num=None if pd.isna(num) else int(num),
+            games=int(games),
             use3=int(p3),
             att_last=int(passes[(passes["passer_player_id"] == r["id"]) & (passes["game_id"] == latest)].shape[0]) if latest else 0,
             att3=int(passes[(passes["passer_player_id"] == r["id"]) & passes["game_id"].isin(g3)].shape[0]),
@@ -373,6 +374,56 @@ def redistribute(t, out_ids):
             t.loc[idx, "role"] = note if not t.loc[idx, "role"] else t.loc[idx, "role"] + f", {short_name(o['name'])}"
             healthy = t[~t["id"].isin(out_ids)]
     return t
+
+
+BLEND_STATS = ["tgt", "rec", "recYd", "rush", "rushYd", "passYd"]
+
+
+def prior_per_game(p_all, season):
+    """Last season's per-game stats for every player, with the team he played for most."""
+    d = p_all[p_all["season"] == season - 1]
+    if d.empty:
+        return {}
+    rush = d[(d["rush_attempt"] == 1) & d["rusher_player_id"].notna()]
+    tgt = d[(d["pass_attempt"] == 1) & d["receiver_player_id"].notna()]
+    pas = d[(d["pass_attempt"] == 1) & d["passer_player_id"].notna()]
+    out = defaultdict(lambda: {"games": set(), "teams": Counter(), "tgt": 0, "rec": 0, "recYd": 0.0,
+                               "rush": 0, "rushYd": 0.0, "passYd": 0.0})
+    for pid, team, gid, yds in zip(rush["rusher_player_id"], rush["posteam"], rush["game_id"], rush["rushing_yards"].fillna(0)):
+        o = out[pid]; o["games"].add(gid); o["teams"][team] += 1; o["rush"] += 1; o["rushYd"] += yds
+    for pid, team, gid, c, yds in zip(tgt["receiver_player_id"], tgt["posteam"], tgt["game_id"], tgt["complete_pass"].fillna(0),
+                                       tgt["receiving_yards"].fillna(0)):
+        o = out[pid]; o["games"].add(gid); o["teams"][team] += 1; o["tgt"] += 1; o["rec"] += c; o["recYd"] += yds
+    for pid, team, gid, yds in zip(pas["passer_player_id"], pas["posteam"], pas["game_id"], pas["passing_yards"].fillna(0)):
+        o = out[pid]; o["games"].add(gid); o["teams"][team] += 1; o["passYd"] += yds
+    res = {}
+    for pid, o in out.items():
+        g = len(o["games"])
+        res[pid] = {"games": g, "team": o["teams"].most_common(1)[0][0], **{k: o[k] / g for k in BLEND_STATS}}
+    return res
+
+
+def blend_prior(pt, p_all, season, played):
+    """Early in the season, blend this season's per-game numbers with last season's so a few big games
+    don't dominate. Weight on this season = (games this season + 1) / 10, so 4 games -> 50%, 9+ games -> 100%.
+    Only for players on the same team as last season with at least 4 games last year."""
+    if played < 2 or pt.empty:
+        return pt  # weeks 1-2 already lean on last season through the play-by-play sample
+    prior = prior_per_game(p_all, season)
+    pt = pt.copy()
+    pt["blend"] = 1.0
+    pt["cur"] = None
+    for idx, r in pt.iterrows():
+        pr = prior.get(r["id"])
+        w = min(1.0, (r["games"] + 1) / 10)
+        if not pr or pr["games"] < 4 or pr["team"] != r["team"] or w >= 1:
+            continue
+        cur = {k: float(r[k]) for k in BLEND_STATS}
+        for k in BLEND_STATS:
+            pt.at[idx, k] = r1(w * cur[k] + (1 - w) * pr[k])
+        pt.at[idx, "blend"] = round(w, 2)
+        pt.at[idx, "cur"] = cur
+    return pt
 
 
 def pick_players(pt, teams_playing, injuries, depth_qbs, overrides):
@@ -849,6 +900,7 @@ def main():
     p_all, use, played = prep_pbp(pbp, season)
     rr, tr = td_rates(p_all)
     pt = player_table(use, rosters, rr, tr, season)
+    pt = blend_prior(pt, p_all, season, played)
     off, _, _, pr, rrk, dgames = team_tables(use, sched, season, teams_df)
     dvp = defense_vs_position(use, rosters, dgames, pr, rrk)
     colors = team_colors(teams_df)
@@ -919,6 +971,9 @@ def main():
             p["inj"] = "Q"
         if r.get("role"):
             p["role"] = r["role"]
+        if r.get("blend") is not None and r.get("blend") < 1 and isinstance(r.get("cur"), dict):
+            p["blend"] = float(r["blend"])
+            p["cur"] = {k: r1(v) for k, v in r["cur"].items()}
         players.append(p)
         if r.get("num") is not None and not pd.isna(r.get("num")):
             nums[p["name"]] = int(r["num"])
