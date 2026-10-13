@@ -686,6 +686,7 @@ function buildProp(p,stat){
   r.strength=r.grade<="B"?"Strong":r.grade==="C"?"Neutral":"Tough";
   return r;
 }
+const STAT_KEY={"Passing yards":"passYd","Rushing yards":"rushYd","Receptions":"rec","Receiving yards":"recYd"};
 const PROP_MIN={"Passing yards":["passYd",120],"Rushing yards":["rushYd",20],"Receptions":["rec",1.5],"Receiving yards":["recYd",15]};
 function propsFor(p){
   const out=[];
@@ -876,7 +877,7 @@ function propRow(r){
   const chain=r.chain.map((s,i)=>`${i?'<span class="op">›</span>':""}<div class="step ${i===r.chain.length-1?"final":""}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join("");
   return `<details class="card ${rv()}"><summary class="pr-row">
     <span class="who">${av(r.p)}<span class="nm">${r.p.name}<small>${r.p.pos}, ${r.p.team} vs ${r.c.opp}${r.p.inj?", questionable":""}</small>${r.p.role?`<small class="role">${esc(r.p.role)}</small>`:""}<small class="show-sm">${r.stat}: ${fmtVal(r.proj,r.kind)} proj, avg ${fmtVal(r.avg,r.kind)}</small></span></span>
-    <span class="pr-stat hide-sm">${r.stat}<small>${r.book?`Line ${r.line} (${r.book.book})`:`${r.p.role?"Role-adjusted avg":"Season avg"} ${fmtVal(r.avg,r.kind)}`}</small></span>
+    <span class="pr-stat hide-sm">${r.stat}<small>${r.book?`Line ${r.line} (${r.book.book})`:`${r.p.role?"Role-adjusted avg":r.p.blend?"Blended avg":"Season avg"} ${fmtVal(r.avg,r.kind)}${r.p.blend&&r.p.cur?` (${fmtVal(r.p.cur[STAT_KEY[r.stat]],r.kind)} this season)`:""}`}</small></span>
     <span class="proj hide-sm">${fmtVal(r.proj,r.kind)}<small>${r.diff>=0?"+":""}${Math.round(r.diff*100)}% vs avg</small></span>
     ${ring(r.over)}
     <span class="hide-sm"><span class="grade g-${r.grade}">${r.grade}</span></span>
@@ -1133,12 +1134,14 @@ function viewMethod(){
   <div class="formula ${rv()}">Volume = plays × pass or run rate × target or carry share</div>
   <div class="formula ${rv()}">Projection = volume × efficiency × defense × weather × venue × role</div>
   <div class="formula ${rv()}">Final = 75% model projection + 25% season average</div>
+  <div class="formula ${rv()}">Early season: average = this season × (games + 1) ÷ 10 + last season × the rest</div>
   <div class="steps">
     <div class="card ${rv()}"><h3>Pace</h3><p>Mostly the team's own plays per game, partly the opponent's, nudged for high or low totals.</p></div>
     <div class="card ${rv()}"><h3>Game script</h3><p>Underdogs throw more and favorites run more: each point of spread shifts pass rate about a third of a percent.</p></div>
     <div class="card ${rv()}"><h3>Volume</h3><p>Team pass attempts or carries times the player's target or carry share, adjusted for his usage trend.</p></div>
     <div class="card ${rv()}"><h3>Efficiency</h3><p>Catch rate and yards per catch, carry, or attempt from his season, the core of each projection.</p></div>
     <div class="card ${rv()}"><h3>Defense</h3><p>The opponent's yardage rank (up to about 8% either way) plus how it defends his position.</p></div>
+    <div class="card ${rv()}"><h3>Small samples</h3><p>A few big games can skew an early-season average, so until about Week 10 each player's numbers blend in last season's (same team only). Four games this season counts for 50%, nine or more for 100%.</p></div>
     <div class="card ${rv()}"><h3>Injuries</h3><p>When a player is ruled out, his teammates inherit his workload: the next running back up takes most of his carries, and his targets spread across the other receivers. Each player keeps his own efficiency.</p></div>
     <div class="card ${rv()}"><h3>Conditions</h3><p>Wind and rain for passing, a small home-field bump, a turf speed bump, and a dome boost for passers.</p></div>
   </div>
