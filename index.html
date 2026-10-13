@@ -180,6 +180,11 @@ a.card:hover,.lift:hover{border-color:var(--line2);transform:translateY(-2px)}
 .search input::placeholder{color:var(--faint)}
 .search input::-webkit-search-cancel-button{filter:invert(.7);cursor:pointer}
 .nofx .rv{animation:none!important}
+.sorth{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:4px 7px;margin:-4px -7px;border-radius:8px;color:var(--faint);font-weight:600;transition:color .2s,background .2s}
+.sorth:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+.sorth i{font-style:normal;font-size:10px;opacity:.7}
+.sorth.on{color:var(--accent)}.sorth.on i{opacity:1}
+.sorth:focus-visible{outline:2px solid var(--accent)}
 .teampick{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;margin-top:22px;scrollbar-width:thin}
 .teampick button{flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 10px 6px;border-radius:13px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-family:var(--display);font-weight:800;font-size:14px;color:var(--muted);transition:border-color .2s,transform .2s,color .2s}
 .teampick button:hover{transform:translateY(-2px);color:var(--ink)}
@@ -346,7 +351,7 @@ tr:last-child td{border-bottom:0}
       <a href="#/slate" data-r="slate">Slate</a>
       <a href="#/td" data-r="td">TD model</a>
       <a href="#/props" data-r="props">Props</a>
-      <a href="#/snaps" data-r="snaps">Snaps</a>
+      <a href="#/snaps" data-r="snaps">Snap counts</a>
       <a href="#/defense" data-r="defense">Defenses</a>
       <a href="#/method" data-r="method">How it works</a>
     </nav>
@@ -758,9 +763,18 @@ function heatCell(v){
   const t=clamp((v-1)/.22,-1,1),pct=Math.round(Math.abs(t)*75),col=t>=0?"var(--accent)":"var(--ice)";
   return `<td class="heat"><span style="background:color-mix(in srgb,${col} ${pct}%,var(--surface2));color:${Math.abs(t)>.55?"#fff":"var(--ink)"}">${mult(v)}</span></td>`;
 }
-function defTable(teams){
+let defSort={key:null,dir:"best"};
+const DEF_COLS=[["name","Defense"],["rb","vs RB TDs"],["wr","vs WR TDs"],["te","vs TE TDs"],["qb","QB rush TDs"],["pr","Pass yds rank"],["rr","Rush yds rank"],["rz","Red zone TD%"]];
+function defTable(teams,sortable){
+  const head=DEF_COLS.map(([k,l],i)=>{
+    const cls=i?"r":"";
+    if(!sortable) return `<th class="${cls}">${l}</th>`;
+    const on=defSort.key===k, tip=k==="name"?(on&&defSort.dir==="best"?"Z to A":"A to Z"):(on&&defSort.dir==="best"?"Worst first":"Best first");
+    const arrow=on?(k==="name"?(defSort.dir==="best"?"▲":"▼"):(defSort.dir==="best"?"▲":"▼")):"↕";
+    return `<th class="${cls}"><button class="sorth ${on?"on":""}" data-dsort="${k}" title="Sort: ${tip}">${l}<i>${arrow}</i></button></th>`;
+  }).join("");
   return `<div class="card scroll ${rv()}"><table>
-  <thead><tr><th>Defense</th><th class="r">vs RB TDs</th><th class="r">vs WR TDs</th><th class="r">vs TE TDs</th><th class="r">QB rush TDs</th><th class="r">Pass yds rank</th><th class="r">Rush yds rank</th><th class="r">Red zone TD%</th></tr></thead>
+  <thead><tr>${head}</tr></thead>
   <tbody>${teams.map(t=>{const d=DEF[t];return `<tr><td><span class="tname">${shield(t,36)}${TEAMS[t].n}</span></td>${["rb","wr","te","qb"].map(k=>heatCell(d[k])).join("")}<td class="r num">${d.pr}</td><td class="r num">${d.rr}</td><td class="r num">${d.rz}%</td></tr>`}).join("")}</tbody></table></div>`;
 }
 // ---------- Snap counts ----------
@@ -811,6 +825,8 @@ function snapTable(S){
   </tbody></table></div>`;
 }
 function viewSnaps(){
+  if(LIVE&&!SNAPS) return `<h1 class="${rv()}">Snap counts</h1>
+  <div class="card empty ${rv()}" style="margin-top:24px;padding:50px 20px">Snap counts arrive with the next data update. Check back after this morning's refresh.</div>`;
   const S=SNAPS||sampleSnaps();
   const teams=Object.keys(S.teams).sort();
   if(!snapState.team||!S.teams[snapState.team]){const n=typeof nextGame==="function"&&nextGame();snapState.team=n&&S.teams[n.away]?n.away:teams[0]}
@@ -829,10 +845,17 @@ function viewSnaps(){
 }
 
 function viewDefense(){
-  const teams=Object.keys(DEF).sort((a,b)=>(DEF[b].rb+DEF[b].wr+DEF[b].te)-(DEF[a].rb+DEF[a].wr+DEF[a].te));
+  let teams=Object.keys(DEF).filter(t=>TEAMS[t]);
+  if(!defSort.key) teams.sort((a,b)=>(DEF[b].rb+DEF[b].wr+DEF[b].te)-(DEF[a].rb+DEF[a].wr+DEF[a].te));
+  else{
+    const v=t=>defSort.key==="name"?TEAMS[t].n:DEF[t][defSort.key];
+    const dir=defSort.dir==="best"?1:-1; // best = stingiest first: fewest TDs allowed, lowest yardage rank, lowest red zone TD%
+    teams.sort((a,b)=>defSort.key==="name"?dir*v(a).localeCompare(v(b)):dir*(v(a)-v(b))||TEAMS[a].n.localeCompare(TEAMS[b].n));
+  }
+  const label=defSort.key&&defSort.key!=="name"?` Sorted by ${DEF_COLS.find(c=>c[0]===defSort.key)[1].toLowerCase()}, ${defSort.dir==="best"?"best to worst":"worst to best"}.`:"";
   return `<h1 class="${rv()}">Defenses</h1>
-  <p class="lede ${rv()}">Touchdowns allowed to each position versus league average. Orange is a soft spot to attack, blue a defense to avoid. Yardage ranks run from 1 (stingiest) to 32.</p>
-  <div style="margin-top:24px">${defTable(teams)}</div>`;
+  <p class="lede ${rv()}">Touchdowns allowed to each position versus league average. Orange is a soft spot to attack, blue a defense to avoid. Yardage ranks run from 1 (stingiest) to 32. Click any column to sort best to worst, and click again for worst to best.<span style="color:var(--accent2)">${label}</span></p>
+  <div style="margin-top:24px">${defTable(teams,true)}</div>`;
 }
 
 function viewGame(id){
@@ -944,6 +967,7 @@ function bind(){
     box.innerHTML=box.dataset.kind==="td"?tdList():box.dataset.kind==="snaps"?snapTable(SNAPS||sampleSnaps()):propList();
     animateRings(box);
   };
+  document.querySelectorAll("button[data-dsort]").forEach(b=>b.onclick=()=>{const k=b.dataset.dsort;defSort=defSort.key===k?{key:k,dir:defSort.dir==="best"?"worst":"best"}:{key:k,dir:"best"};render()});
   document.querySelectorAll("#teamPick button").forEach(b=>b.onclick=()=>{snapState.team=b.dataset.team;query="";render()});
   document.querySelectorAll("#sideSeg button").forEach(b=>b.onclick=()=>{snapState.side=b.dataset.side;render()});
   document.querySelectorAll("#snapPos button").forEach(b=>b.onclick=()=>{snapState.pos=b.dataset.sp;render()});
