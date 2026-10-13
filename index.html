@@ -173,6 +173,30 @@ a.card:hover,.lift:hover{border-color:var(--line2);transform:translateY(-2px)}
 .seg{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:3px;overflow-x:auto;max-width:100%}
 .seg button{border:0;background:none;padding:8px 15px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap;transition:color .2s,background .2s}
 .seg button:hover{color:var(--ink)}
+.search{display:flex;align-items:center;gap:9px;flex:1 1 240px;max-width:360px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:0 13px;color:var(--muted);transition:border-color .2s,box-shadow .2s}
+.search:focus-within{border-color:rgba(255,106,43,.55);box-shadow:0 0 0 3px var(--accent-soft);color:var(--accent)}
+.search svg{width:17px;height:17px;flex:none}
+.search input{flex:1;min-width:0;background:none;border:0;outline:none;color:var(--ink);font:inherit;font-size:15px;padding:10px 0}
+.search input::placeholder{color:var(--faint)}
+.search input::-webkit-search-cancel-button{filter:invert(.7);cursor:pointer}
+.nofx .rv{animation:none!important}
+.cd-short{display:block;margin-top:5px;font-size:12px;font-weight:600;color:var(--accent2);white-space:nowrap}
+.cd-clock{display:flex;gap:7px;justify-content:center;margin-top:6px}
+.cd-unit{min-width:54px;padding:7px 6px 6px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.cd-unit b{display:block;font-family:var(--display);font-weight:900;font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+.cd-unit small{display:block;margin-top:3px;font-size:11px;color:var(--muted);font-weight:600}
+.cd-unit:last-child b{color:var(--accent);text-shadow:0 0 18px var(--glow)}
+.live{display:inline-flex;align-items:center;gap:7px;font-weight:700;color:#FF5A5A}
+.live i{width:8px;height:8px;border-radius:50%;background:#FF5A5A;box-shadow:0 0 10px #FF5A5A;animation:pulse 1.2s ease-in-out infinite}
+.cd-clock .live{font-family:var(--display);font-size:24px;padding:8px 14px;border-radius:12px;background:rgba(255,90,90,.12)}
+.final{font-family:var(--display);font-weight:800;font-size:22px;color:var(--muted)}
+.nextko{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-top:22px;padding:16px 22px;text-decoration:none;background:linear-gradient(90deg,rgba(255,106,43,.10),transparent 55%),var(--surface)}
+.nk-l{display:flex;flex-direction:column;gap:4px}
+.nk-t{font-size:13px;font-weight:700;color:var(--accent)}
+.nk-m{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:900;font-size:30px;line-height:1}
+.nk-m .at{font-size:16px;color:var(--faint);font-weight:700}
+.nextko .cd-clock{margin-top:0}
+@media (max-width:600px){.cd-unit{min-width:46px}.cd-unit b{font-size:23px}.nk-m{font-size:24px}}
 .seg button.on{background:var(--raise);color:var(--ink);box-shadow:0 0 0 1px var(--line2),0 4px 14px -6px var(--glow)}
 
 /* expandable rows (TD + props) */
@@ -336,22 +360,22 @@ let DEF={
 };
 // spread is the home team's line
 let GAMES=[
- {id:"MIA-CHI",away:"MIA",home:"CHI",day:"Sun, Oct 18",time:"1:00 PM ET",spread:-3,total:43.5,
+ {id:"MIA-CHI",kick:"2026-10-18T17:00:00Z",away:"MIA",home:"CHI",day:"Sun, Oct 18",time:"1:00 PM ET",spread:-3,total:43.5,
   st:{name:"Soldier Field",city:"Chicago, IL",roof:"Open air",surface:"Grass",note:"Wind off Lake Michigan regularly affects deep passing and kicking."},
   wx:{temp:51,wind:21,dir:"NW",precip:15,cond:"Breezy, partly cloudy",indoor:false}},
- {id:"DET-GB",away:"DET",home:"GB",day:"Sun, Oct 18",time:"1:00 PM ET",spread:1.5,total:47.5,
+ {id:"DET-GB",kick:"2026-10-18T17:00:00Z",away:"DET",home:"GB",day:"Sun, Oct 18",time:"1:00 PM ET",spread:1.5,total:47.5,
   st:{name:"Lambeau Field",city:"Green Bay, WI",roof:"Open air",surface:"Hybrid grass",note:"Cold, swirling conditions arrive early in the season here."},
   wx:{temp:48,wind:17,dir:"W",precip:20,cond:"Cloudy and gusty",indoor:false}},
- {id:"CIN-BAL",away:"CIN",home:"BAL",day:"Sun, Oct 18",time:"1:00 PM ET",spread:-4.5,total:51.5,
+ {id:"CIN-BAL",kick:"2026-10-18T17:00:00Z",away:"CIN",home:"BAL",day:"Sun, Oct 18",time:"1:00 PM ET",spread:-4.5,total:51.5,
   st:{name:"M&T Bank Stadium",city:"Baltimore, MD",roof:"Open air",surface:"Grass",note:"Natural grass, typically neutral for scoring."},
   wx:{temp:61,wind:7,dir:"S",precip:60,cond:"Rain likely",indoor:false}},
- {id:"SF-SEA",away:"SF",home:"SEA",day:"Sun, Oct 18",time:"4:05 PM ET",spread:-1,total:44.5,
+ {id:"SF-SEA",kick:"2026-10-18T20:05:00Z",away:"SF",home:"SEA",day:"Sun, Oct 18",time:"4:05 PM ET",spread:-1,total:44.5,
   st:{name:"Lumen Field",city:"Seattle, WA",roof:"Open air (partial cover)",surface:"Turf",note:"Very loud for visiting offenses; the roof covers most seats but not the field."},
   wx:{temp:54,wind:11,dir:"SW",precip:70,cond:"Light rain",indoor:false}},
- {id:"PHI-DAL",away:"PHI",home:"DAL",day:"Sun, Oct 18",time:"4:25 PM ET",spread:3,total:47,
+ {id:"PHI-DAL",kick:"2026-10-18T20:25:00Z",away:"PHI",home:"DAL",day:"Sun, Oct 18",time:"4:25 PM ET",spread:3,total:47,
   st:{name:"AT&T Stadium",city:"Arlington, TX",roof:"Retractable, expected closed",surface:"Turf",note:"Climate controlled when the roof is closed, so weather is a non-factor."},
   wx:{temp:72,wind:0,dir:"",precip:0,cond:"Indoors",indoor:true}},
- {id:"BUF-KC",away:"BUF",home:"KC",day:"Sun, Oct 18",time:"8:20 PM ET",spread:-1.5,total:49.5,
+ {id:"BUF-KC",kick:"2026-10-19T00:20:00Z",away:"BUF",home:"KC",day:"Sun, Oct 18",time:"8:20 PM ET",spread:-1.5,total:49.5,
   st:{name:"Arrowhead Stadium",city:"Kansas City, MO",roof:"Open air",surface:"Grass",note:"One of the loudest venues in the league; road offenses see more false starts."},
   wx:{temp:58,wind:9,dir:"S",precip:10,cond:"Clear",indoor:false}}
 ];
@@ -503,12 +527,14 @@ function buildProp(p,stat){
   r.strength=r.grade<="B"?"Strong":r.grade==="C"?"Neutral":"Tough";
   return r;
 }
+const PROP_MIN={"Passing yards":["passYd",120],"Rushing yards":["rushYd",20],"Receptions":["rec",1.5],"Receiving yards":["recYd",15]};
 function propsFor(p){
   const out=[];
+  const keep=r=>{const [k,min]=PROP_MIN[r.stat];return (PROPLINES[p.name]||{})[r.stat]||p[k]>=min};
   if(p.pos==="QB"){out.push(buildProp(p,"Passing yards")); if(p.rush>=3) out.push(buildProp(p,"Rushing yards"));}
   if(p.pos==="RB"){out.push(buildProp(p,"Rushing yards")); if(p.rec>=2) out.push(buildProp(p,"Receptions"),buildProp(p,"Receiving yards"));}
   if(p.pos==="WR"||p.pos==="TE"){out.push(buildProp(p,"Receptions"),buildProp(p,"Receiving yards"));}
-  return out;
+  return out.filter(keep);
 }
 let PROPS=P.flatMap(propsFor);
 
@@ -575,6 +601,20 @@ const mult=v=>`${v>=1?"+":"−"}${Math.abs(Math.round((v-1)*100))}%`;
 const pillCls=v=>v>1.005?"up":v<.995?"down":"";
 const fmtOdds=o=>o>0?"+"+o:""+o;
 const impl=o=>o>0?100/(o+100):-o/(-o+100);
+const GAME_MS=3.6*3600e3;
+const kickMs=g=>g&&g.kick?Date.parse(g.kick):NaN;
+function nextGame(){const now=Date.now();return GAMES.filter(g=>kickMs(g)>now).sort((a,b)=>kickMs(a)-kickMs(b))[0]}
+const cd=(g,mode)=>isNaN(kickMs(g))?"":`<span class="cd cd-${mode}" data-kick="${g.kick}" data-mode="${mode}"></span>`;
+function cdHTML(kick,mode){
+  const t=Date.parse(kick)-Date.now();
+  if(t<=0&&-t<GAME_MS) return `<span class="live"><i></i>Live now</span>`;
+  if(t<=0) return mode==="clock"?`<span class="final">Final</span>`:"Final";
+  const d=Math.floor(t/864e5),h=Math.floor(t/36e5)%24,m=Math.floor(t/6e4)%60,sec=Math.floor(t/1e3)%60,p=n=>String(n).padStart(2,"0");
+  if(mode==="clock") return [[d,"days"],[p(h),"hrs"],[p(m),"min"],[p(sec),"sec"]].map(([v,l])=>`<span class="cd-unit"><b>${v}</b><small>${l}</small></span>`).join("");
+  return d>0?`Kickoff in ${d}d ${h}h`:h>0?`Kickoff in ${h}h ${p(m)}m`:`Kickoff in ${m}m ${p(sec)}s`;
+}
+function tickCountdowns(){document.querySelectorAll(".cd[data-kick]").forEach(el=>{const h=cdHTML(el.dataset.kick,el.dataset.mode);if(el.innerHTML!==h)el.innerHTML=h})}
+setInterval(tickCountdowns,1000);
 let rvI=0; const rv=()=>`rv" style="--i:${rvI++}`;
 
 // ---------- Views ----------
@@ -588,7 +628,7 @@ function viewSlate(){
   const rows=GAMES.map(g=>{
     const im=wxImpact(g),best=ALL.find(x=>x.m.g===g);
     return `<a class="card ${rv()}" href="#/game/${g.id}"><div class="gr">
-      <div class="time">${g.time.replace(" ET","")}<small>${g.day.split(",")[0]} ET</small></div>
+      <div class="time">${g.time.replace(" ET","")}<small>${g.day.split(",")[0]} ET</small>${cd(g,"short")}</div>
       <div class="mu">${shield(g.away,52)}${g.away}<span class="pp">${f1(implied(g,g.away))}</span><span class="at">at</span>${shield(g.home,52,true)}${g.home}<span class="pp">${f1(implied(g,g.home))}</span></div>
       <div class="wxp">${icon(wxIcon(g))}<div>${g.wx.indoor?"Indoors":g.wx.temp==="--"?"Weather":`${g.wx.temp}°, ${g.wx.wind} mph`}<div class="small ${im.lvl}">${im.txt}</div></div></div>
       <div class="thr">Top TD threat<b>${best.name}</b><em>${fmtPct(best.m.prob)}</em></div>
@@ -596,6 +636,7 @@ function viewSlate(){
   return `<h1 class="${rv()}">Week ${META?META.week:6}</h1>
   <p class="lede ${rv()}">Touchdown odds and prop projections for every game, built from pace, game script, matchups, and weather.</p>
   <div class="sample ${rv()}"><i></i>${LIVE?`Live data, updated ${new Date(META.updated).toLocaleString([], {weekday:"short",hour:"numeric",minute:"2-digit"})}. Lines from ${META.oddsSource}.`:"Prototype running on sample data"}</div>
+  ${(()=>{const n=nextGame();return n?`<a class="card nextko ${rv()}" href="#/game/${n.id}"><div class="nk-l"><span class="nk-t">Next kickoff</span><span class="nk-m">${shield(n.away,40)}<b>${n.away}</b><span class="at">at</span>${shield(n.home,40,true)}<b>${n.home}</b></span><span class="small">${n.day}, ${n.time}</span></div><div class="cd-clockwrap">${cd(n,"clock")}</div></a>`:""})()}
   <a class="card feature ${rv()}" href="#/game/${m.g.id}">
     <span class="badge">${icon("flame").replace('<svg','<svg width="13" height="13"')}Top touchdown play</span>
     <div class="f-main">
@@ -614,6 +655,16 @@ function viewSlate(){
 }
 
 let tdState={pos:"All"};
+let query="";
+const qnorm=v=>String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/g,"");
+function matchQ(p){
+  const q=qnorm(query).trim(); if(!q) return true;
+  const hay=qnorm(`${p.name} ${p.team} ${(TEAMS[p.team]||{}).n||""}`);
+  return q.split(/\s+/).every(w=>hay.includes(w));
+}
+const esc=v=>String(v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function searchBox(){return `<label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search a player or team" value="${esc(query)}" autocomplete="off" spellcheck="false" aria-label="Search a player or team"></label>`}
+const emptyMsg=()=>`<div class="card empty" style="padding:40px 20px">No players match “${esc(query)}”. Try a last name or a team like “Bills” or “KC”.</div>`;
 function tdRow(x,i){const m=x.m;return `<details class="card ${rv()}"><summary class="td-row">
     <span class="rank">${i+1}</span>
     <span class="who">${av(x)}<span class="nm">${x.name}<small>${x.pos}, ${x.team} vs ${m.opp}${x.inj?", questionable":""}</small></span></span>
@@ -632,12 +683,15 @@ function tdRow(x,i){const m=x.m;return `<details class="card ${rv()}"><summary c
     </div>
     <div class="eq">${f1(m.teamTD)} × ${x.share.toFixed(2)} × ${m.defAdj.toFixed(2)} × ${m.wx.toFixed(2)} × ${m.form.toFixed(2)} = <code>${m.lam.toFixed(2)} expected TDs</code> = <code>${fmtPct(m.prob)}</code> chance to score. Rated ${tdLabel(m.prob).toLowerCase()}.</div>
   </div></details>`}
+function tdList(){
+  const list=ALL.filter(x=>(tdState.pos==="All"||x.pos===tdState.pos)&&matchQ(x));
+  return list.length?list.map(tdRow).join(""):emptyMsg();
+}
 function viewTD(){
-  const list=ALL.filter(x=>tdState.pos==="All"||x.pos===tdState.pos);
   return `<h1 class="${rv()}">Touchdown model</h1>
   <p class="lede ${rv()}">Each player's chance to score at least once. The closer the ball is to the end zone, the likelier the score. Tap any player for the math.</p>
-  <div class="filters ${rv()}"><div class="seg" id="posSeg">${["All","QB","RB","WR","TE"].map(p=>`<button data-pos="${p}" class="${tdState.pos===p?"on":""}">${p==="All"?"All":p}</button>`).join("")}</div></div>
-  <div class="list">${list.map(tdRow).join("")}</div>`;
+  <div class="filters ${rv()}">${searchBox()}<div class="seg" id="posSeg">${["All","QB","RB","WR","TE"].map(p=>`<button data-pos="${p}" class="${tdState.pos===p?"on":""}">${p==="All"?"All":p}</button>`).join("")}</div></div>
+  <div class="list" id="listBox" data-kind="td">${tdList()}</div>`;
 }
 
 let propState={stat:"All",sort:"chance"};
@@ -662,17 +716,21 @@ function propRow(r){
     <div class="eq">The ring shows a <code>${fmtPct(r.over)}</code> chance he goes over ${r.line}, ${r.book?`the ${r.book.book} line (best over price ${fmtOdds(r.book.price)}, implied ${fmtPct(impl(r.book.price))}). Edge: <code>${(r.over-impl(r.book.price)>=0?"+":"")+Math.round((r.over-impl(r.book.price))*100)}%</code>.`:"the half-point line nearest his season average."} Projections use a ${r.kind==="count"?"Poisson":"normal"} distribution; the range covers the middle 80% of outcomes.</div>
   </div></details>`;
 }
-function viewProps(){
-  let list=PROPS.filter(r=>propState.stat==="All"||r.stat===propState.stat);
+function propList(){
+  let list=PROPS.filter(r=>(propState.stat==="All"||r.stat===propState.stat)&&matchQ(r.p));
   list=[...list].sort((a,b)=>propState.sort==="chance"?b.over-a.over:propState.sort==="boost"?b.diff-a.diff:a.over-b.over);
+  return list.length?list.map(propRow).join(""):emptyMsg();
+}
+function viewProps(){
   const stats=["All","Passing yards","Rushing yards","Receptions","Receiving yards"];
   return `<h1 class="${rv()}">Player props</h1>
   <p class="lede ${rv()}">Every projection is built step by step: pace, game script, volume, efficiency, then defense, weather, venue, and role. The ring is his chance to go over the sportsbook line, or the line nearest his season average when no book line is posted. Tap a prop to see every step.</p>
   <div class="filters ${rv()}">
+    ${searchBox()}
     <div class="seg" id="statSeg">${stats.map(s=>`<button data-stat="${s}" class="${propState.stat===s?"on":""}">${s==="All"?"All props":s}</button>`).join("")}</div>
     <div class="seg" id="sortSeg">${[["chance","Best chance"],["boost","Biggest boost"],["fade","Fades"]].map(([k,l])=>`<button data-sort="${k}" class="${propState.sort===k?"on":""}">${l}</button>`).join("")}</div>
   </div>
-  <div class="list">${list.map(propRow).join("")}</div>`;
+  <div class="list" id="listBox" data-kind="props">${propList()}</div>`;
 }
 
 function heatCell(v){
@@ -703,7 +761,7 @@ function viewGame(id){
   <div class="card gh ${rv()}"><div class="wash" style="--ca:${TEAMS[g.away].c};--ch:${TEAMS[g.home].c}"></div>
     <div class="gh-row">
       <div class="side-t">${shield(g.away,92)}<span class="ab">${g.away}</span><span class="full">${TEAMS[g.away].n}</span><span class="pt">${count(pa,1)}<small>projected</small></span></div>
-      <div class="mid"><span class="k">${g.time}</span><span class="small">${g.day}</span><div class="chips">${g.ml&&g.ml[g.away]?`<span>${g.away} ${fmtOdds(g.ml[g.away].price)}</span><span>${g.home} ${fmtOdds(g.ml[g.home].price)}</span>`:""}<span>${g.home} ${g.spread>0?"+":""}${g.spread}</span><span>O/U ${g.total}</span><span class="${im.lvl}">${im.txt}</span></div></div>
+      <div class="mid"><span class="k">${g.time}</span><span class="small">${g.day}</span><div class="chips">${g.ml&&g.ml[g.away]?`<span>${g.away} ${fmtOdds(g.ml[g.away].price)}</span><span>${g.home} ${fmtOdds(g.ml[g.home].price)}</span>`:""}<span>${g.home} ${g.spread>0?"+":""}${g.spread}</span><span>O/U ${g.total}</span><span class="${im.lvl}">${im.txt}</span></div>${cd(g,"clock")}</div>
       <div class="side-t h">${shield(g.home,92,true)}<span class="ab">${g.home}</span><span class="full">${TEAMS[g.home].n}</span><span class="pt">${count(ph,1)}<small>projected</small></span></div>
     </div>
   </div>
@@ -788,9 +846,17 @@ function render(){
   const views={slate:viewSlate,td:viewTD,props:viewProps,defense:viewDefense,method:viewMethod,nba:viewNBA,game:()=>viewGame(arg)};
   document.getElementById("app").innerHTML=(views[r]||viewSlate)();
   document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("on",a.dataset.r===r||(r==="game"&&a.dataset.r==="slate")||(!views[r]&&a.dataset.r==="slate")));
-  animateCounts();animateRings();bind();
+  animateCounts();animateRings();bind();tickCountdowns();
 }
 function bind(){
+  const q=document.getElementById("q");
+  if(q) q.oninput=()=>{
+    query=q.value;
+    const box=document.getElementById("listBox");
+    box.classList.add("nofx");
+    box.innerHTML=box.dataset.kind==="td"?tdList():propList();
+    animateRings(box);
+  };
   document.querySelectorAll("#posSeg button").forEach(b=>b.onclick=()=>{tdState.pos=b.dataset.pos;render()});
   document.querySelectorAll("#statSeg button").forEach(b=>b.onclick=()=>{propState.stat=b.dataset.stat;render()});
   document.querySelectorAll("#sortSeg button").forEach(b=>b.onclick=()=>{propState.sort=b.dataset.sort;render()});
