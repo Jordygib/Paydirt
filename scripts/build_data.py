@@ -634,6 +634,204 @@ def player_props(event_ids, remaining):
     return lines
 
 
+
+# ---------------------------------------------------------------- picks of the week (graded automatically)
+MARKETS = {
+    "anytime td": "td", "anytime touchdown": "td", "passing yards": "passYd", "rushing yards": "rushYd",
+    "receiving yards": "recYd", "receptions": "rec", "rush + rec yards": "rrYd", "rushing + receiving yards": "rrYd",
+    "passing tds": "passTD", "passing touchdowns": "passTD", "moneyline": "ml", "spread": "spread", "total": "total",
+    "game total": "total",
+}
+
+
+def load_picks():
+    path = os.path.join(os.path.dirname(__file__), "..", "picks.json")
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        log("picks.json could not be read:", e)
+        return None
+
+
+def american_profit(odds, units):
+    odds = float(odds)
+    return units * (odds / 100 if odds > 0 else 100 / abs(odds))
+
+
+def to_decimal(odds):
+    odds = float(odds)
+    return 1 + (odds / 100 if odds > 0 else 100 / abs(odds))
+
+
+def leg_game(leg, sched, season, week, name_team):
+    team = leg.get("team") or name_team.get(norm_name(leg.get("player", "")))
+    if not team:
+        return None, None
+    g = sched[(sched["season"] == season) & (sched["week"] == week) &
+              ((sched["home_team"] == team) | (sched["away_team"] == team))]
+    return (g.iloc[0] if not g.empty else None), team
+
+
+def player_line(pbp, gid, pid):
+    d = pbp[pbp["game_id"] == gid]
+    rush = d[d["rusher_player_id"] == pid]
+    rec = d[(d["receiver_player_id"] == pid) & (d["pass_attempt"] == 1)]
+    pas = d[(d["passer_player_id"] == pid) & (d["pass_attempt"] == 1)]
+    tdcol = "td_player_id" if "td_player_id" in d.columns else None
+    return {
+        "rushYd": float(rush["rushing_yards"].fillna(0).sum()), "recYd": float(rec["receiving_yards"].fillna(0).sum()),
+        "rec": float(rec["complete_pass"].fillna(0).sum()), "passYd": float(pas["passing_yards"].fillna(0).sum()),
+        "passTD": float(pas["pass_touchdown"].fillna(0).sum()),
+        "td": float((d[tdcol] == pid).sum()) if tdcol else float(rush["rush_touchdown"].sum() + rec["pass_touchdown"].sum()),
+        "touched": len(rush) + len(rec) + len(pas),
+    }
+
+
+def grade_leg(leg, ctx):
+    """Returns (status, detail): status in win/loss/push/void/pending/unknown."""
+    if leg.get("result"):
+        return str(leg["result"]).lower(), "set manually"
+    market = MARKETS.get(str(leg.get("market", "")).strip().lower())
+    if not market:
+        return "unknown", f"unknown market '{leg.get('market')}'"
+    g, team = leg_game(leg, ctx["sched"], ctx["season"], ctx["week"], ctx["name_team"])
+    if g is None:
+        return "unknown", "game not found"
+    if pd.isna(g.get("home_score")):
+        return "pending", ""
+    hs, as_ = float(g["home_score"]), float(g["away_score"])
+    if market in ("ml", "spread", "total"):
+        mine, theirs = (hs, as_) if team == g["home_team"] else (as_, hs)
+        if market == "ml":
+            return ("win" if mine > theirs else "push" if mine == theirs else "loss"), f"{int(mine)}-{int(theirs)}"
+        if market == "spread":
+            m = mine + float(leg.get("line", 0)) - theirs
+            return ("win" if m > 0 else "push" if m == 0 else "loss"), f"{int(mine)}-{int(theirs)}"
+        tot, line = hs + as_, float(leg.get("line", 0))
+        side = str(leg.get("side", "over")).lower()
+        res = "push" if tot == line else ("win" if (tot > line) == (side == "over") else "loss")
+        return res, f"{int(tot)} total points"
+    pid = ctx["name_id"].get(norm_name(leg.get("player", "")))
+    if not pid:
+        return "unknown", "player not found"
+    st = player_line(ctx["pbp"], g["game_id"], pid)
+    played = st["touched"] > 0 or norm_name(leg.get("player", "")) in ctx["snapped"].get(g["game_id"], set())
+    if not played:
+        return "void", "did not play"
+    if market == "td":
+        return ("win" if st["td"] > 0 else "loss"), f"{int(st['td'])} TD"
+    val = st["rushYd"] + st["recYd"] if market == "rrYd" else st[market]
+    line = float(leg.get("line", 0))
+    side = str(leg.get("side", "over")).lower()
+    res = "push" if val == line else ("win" if (val > line) == (side == "over") else "loss")
+    unit = {"rec": "catches", "passTD": "pass TD"}.get(market, "yds")
+    return res, f"{int(val) if float(val).is_integer() else round(val, 1)} {unit}"
+
+
+def settle(bet, legs_graded):
+    """Settle a parlay or single bet in units."""
+    units = float(bet.get("units", 1))
+    if bet.get("result"):
+        res = str(bet["result"]).lower()
+    else:
+        st = [s for s, _ in legs_graded]
+        if any(s == "loss" for s in st):
+            res = "loss"
+        elif any(s in ("pending", "unknown") for s in st):
+            res = "pending"
+        elif all(s in ("push", "void") for s in st):
+            res = "push"
+        else:
+            res = "win"
+    if res == "loss":
+        return res, -units
+    if res in ("push", "pending"):
+        return res, 0.0
+    # win: if any leg pushed or was voided, pay the remaining legs at their own odds when given
+    st = [s for s, _ in legs_graded]
+    legs = bet.get("legs") or [bet]
+    if any(s in ("push", "void") for s in st) and len(legs) > 1:
+        live = [l for l, (s, _) in zip(legs, legs_graded) if s == "win"]
+        if all(l.get("odds") is not None for l in live):
+            dec = 1.0
+            for l in live:
+                dec *= to_decimal(l["odds"])
+            return "win", round(units * (dec - 1), 2)
+        return "review", 0.0  # needs a manual result: add "result" and "profit" to this bet in picks.json
+    if bet.get("profit") is not None:
+        return "win", float(bet["profit"])
+    return "win", round(american_profit(bet["odds"], units), 2)
+
+
+def grade_picks(picks, prev, sched, pbp, rosters, snaps, season, now):
+    if not picks or not picks.get("weeks"):
+        return None
+    ros = rosters.drop_duplicates("gsis_id")
+    name_id = {norm_name(n): i for n, i in zip(ros["full_name"], ros["gsis_id"])}
+    name_team = {norm_name(n): t for n, t in zip(ros["full_name"], ros["team"])}
+    snapped = defaultdict(set)
+    if snaps is not None and not snaps.empty and "game_id" in snaps.columns:
+        for _, r in snaps[pd.to_numeric(snaps.get("offense_snaps", 0), errors="coerce").fillna(0) > 0].iterrows():
+            snapped[str(r["game_id"])].add(norm_name(r["player"]))
+    locked = {f"{w['season']}-{w['week']}": w for w in (prev or {}).get("PICKS", {}).get("weeks", [])}
+    weeks_out = []
+    for wk in picks["weeks"]:
+        wseason, wnum = int(wk.get("season", season)), int(wk["week"])
+        ctx = dict(sched=sched, season=wseason, week=wnum, name_team=name_team, name_id=name_id, pbp=pbp, snapped=snapped)
+        key = f"{wseason}-{wnum}"
+        entry = {"season": wseason, "week": wnum, "posted": wk.get("posted")}
+        for kind in ("parlay", "prop"):
+            bet = wk.get(kind)
+            if not bet:
+                continue
+            legs = bet.get("legs") if kind == "parlay" else [bet]
+            # lock: once the first game in this bet has kicked off, keep the version that was live at kickoff
+            kicks = []
+            for leg in legs:
+                g, _ = leg_game(leg, sched, wseason, wnum, name_team)
+                if g is not None:
+                    kicks.append(kickoff_utc(g))
+            first_kick = min(kicks) if kicks else None
+            prior = (locked.get(key) or {}).get(kind)
+            if first_kick and now >= first_kick and prior and prior.get("source"):
+                src = json.loads(prior["source"])
+                for i, leg in enumerate(legs):  # manual results may still be added after kickoff
+                    if leg.get("result") and i < len(src.get("legs", [src])):
+                        (src.get("legs") or [src])[i]["result"] = leg["result"]
+                for k in ("result", "profit"):
+                    if bet.get(k) is not None:
+                        src[k] = bet[k]
+                bet = src
+                legs = bet.get("legs") if kind == "parlay" else [bet]
+            graded = [grade_leg(l, ctx) for l in legs]
+            res, profit = settle(bet, graded)
+            entry[kind] = {
+                "odds": bet.get("odds"), "units": float(bet.get("units", 1)), "result": res, "profit": profit,
+                "kick": first_kick.isoformat() if first_kick else None,
+                "locked": bool(first_kick and now >= first_kick),
+                "note": bet.get("note", ""),
+                "legs": [dict(player=l.get("player"), team=l.get("team"), market=l.get("market"), side=l.get("side"),
+                              line=l.get("line"), odds=l.get("odds"), status=s, detail=d) for l, (s, d) in zip(legs, graded)],
+                "source": json.dumps(bet),
+            }
+        weeks_out.append(entry)
+    weeks_out.sort(key=lambda w: (w["season"], w["week"]), reverse=True)
+
+    def summarize(kind):
+        bets = [w[kind] for w in weeks_out if kind in w and w[kind]["result"] in ("win", "loss", "push")]
+        risked = sum(b["units"] for b in bets if b["result"] != "push")
+        units = round(sum(b["profit"] for b in bets), 2)
+        return {"w": sum(b["result"] == "win" for b in bets), "l": sum(b["result"] == "loss" for b in bets),
+                "p": sum(b["result"] == "push" for b in bets), "units": units,
+                "roi": round(100 * units / risked, 1) if risked else 0.0}
+    legs_all = [l for w in weeks_out if "parlay" in w for l in w["parlay"]["legs"] if l["status"] in ("win", "loss")]
+    return {"weeks": weeks_out, "record": {"parlay": summarize("parlay"), "prop": summarize("prop"),
+            "legs": {"hit": sum(l["status"] == "win" for l in legs_all), "total": len(legs_all)}}}
+
+
 # ---------------------------------------------------------------- main
 def main():
     now = datetime.now(timezone.utc)
@@ -740,6 +938,7 @@ def main():
         TEAMS=colors, OFF={k: v for k, v in off.items()}, DEF=dvp, GAMES=out_games, P=players, NUM=nums,
         PROPLINES=prop_out,
         SNAPS=build_snaps(snaps, season),
+        PICKS=grade_picks(load_picks(), prev, sched, pbp, rosters, snaps, season, now),
     )
     with open(OUT, "w") as f:
         json.dump(data, f, separators=(",", ":"), default=float)
