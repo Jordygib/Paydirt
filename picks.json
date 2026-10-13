@@ -3,17 +3,16 @@
     {
       "season": 2026,
       "week": 6,
-      "posted": "2026-10-15T18:00:00-04:00",
+      "posted": "2026-10-13T12:00:00-04:00",
       "parlay": {
-        "odds": 250,
+        "odds": 134,
         "units": 1,
         "legs": [
-          { "player": "Player Name", "market": "Rushing yards", "side": "over", "line": 59.5, "odds": -250 },
-          { "player": "Player Name", "market": "Anytime TD", "odds": -150 },
-          { "team": "KC", "market": "Moneyline", "odds": -200 }
+          { "player": "Justin Herbert", "market": "Passing yards", "side": "over", "line": 149.5, "odds": -380 },
+          { "player": "Woody Marks", "market": "Rushing yards", "side": "over", "line": 39.5, "odds": -215 },
+          { "player": "Brenton Strange", "market": "Receptions", "side": "over", "line": 2.5 }
         ]
-      },
-      "prop": { "player": "Player Name", "market": "Receiving yards", "side": "over", "line": 54.5, "odds": -115, "units": 1 }
+      }
     }
   ]
 }
