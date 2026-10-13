@@ -180,6 +180,8 @@ a.card:hover,.lift:hover{border-color:var(--line2);transform:translateY(-2px)}
 .search input::placeholder{color:var(--faint)}
 .search input::-webkit-search-cancel-button{filter:invert(.7);cursor:pointer}
 .nofx .rv{animation:none!important}
+.who .nm small.role{color:var(--turf);font-weight:700;margin-top:1px}
+.who .nm small.role::before{content:"▲ ";font-size:9px}
 .cd-short{display:block;margin-top:5px;font-size:12px;font-weight:600;color:var(--accent2);white-space:nowrap}
 .cd-clock{display:flex;gap:7px;justify-content:center;margin-top:6px}
 .cd-unit{min-width:54px;padding:7px 6px 6px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
@@ -672,7 +674,7 @@ function searchBox(){return `<label class="search"><svg viewBox="0 0 24 24" fill
 const emptyMsg=()=>`<div class="card empty" style="padding:40px 20px">No players match “${esc(query)}”. Try a last name or a team like “Bills” or “KC”.</div>`;
 function tdRow(x,i){const m=x.m;return `<details class="card ${rv()}"><summary class="td-row">
     <span class="rank">${i+1}</span>
-    <span class="who">${av(x)}<span class="nm">${x.name}<small>${x.pos}, ${x.team} vs ${m.opp}${x.inj?", questionable":""}</small></span></span>
+    <span class="who">${av(x)}<span class="nm">${x.name}<small>${x.pos}, ${x.team} vs ${m.opp}${x.inj?", questionable":""}</small>${x.role?`<small class="role">${esc(x.role)}</small>`:""}</span></span>
     <span class="fieldcell">${field(m.prob)}</span>
     <span class="pc ${m.prob>=.4?"hot":""}">${fmtPct(m.prob)}</span>
   </summary><div class="open">
@@ -708,8 +710,8 @@ function rangeBar(r){
 function propRow(r){
   const chain=r.chain.map((s,i)=>`${i?'<span class="op">›</span>':""}<div class="step ${i===r.chain.length-1?"final":""}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join("");
   return `<details class="card ${rv()}"><summary class="pr-row">
-    <span class="who">${av(r.p)}<span class="nm">${r.p.name}<small>${r.p.pos}, ${r.p.team} vs ${r.c.opp}${r.p.inj?", questionable":""}</small><small class="show-sm">${r.stat}: ${fmtVal(r.proj,r.kind)} proj, avg ${fmtVal(r.avg,r.kind)}</small></span></span>
-    <span class="pr-stat hide-sm">${r.stat}<small>${r.book?`Line ${r.line} (${r.book.book})`:`Season avg ${fmtVal(r.avg,r.kind)}`}</small></span>
+    <span class="who">${av(r.p)}<span class="nm">${r.p.name}<small>${r.p.pos}, ${r.p.team} vs ${r.c.opp}${r.p.inj?", questionable":""}</small>${r.p.role?`<small class="role">${esc(r.p.role)}</small>`:""}<small class="show-sm">${r.stat}: ${fmtVal(r.proj,r.kind)} proj, avg ${fmtVal(r.avg,r.kind)}</small></span></span>
+    <span class="pr-stat hide-sm">${r.stat}<small>${r.book?`Line ${r.line} (${r.book.book})`:`${r.p.role?"Role-adjusted avg":"Season avg"} ${fmtVal(r.avg,r.kind)}`}</small></span>
     <span class="proj hide-sm">${fmtVal(r.proj,r.kind)}<small>${r.diff>=0?"+":""}${Math.round(r.diff*100)}% vs avg</small></span>
     ${ring(r.over)}
     <span class="hide-sm"><span class="grade g-${r.grade}">${r.grade}</span></span>
@@ -801,6 +803,7 @@ function viewMethod(){
     <div class="card ${rv()}"><h3>Volume</h3><p>Team pass attempts or carries times the player's target or carry share, adjusted for his usage trend.</p></div>
     <div class="card ${rv()}"><h3>Efficiency</h3><p>Catch rate and yards per catch, carry, or attempt from his season, the core of each projection.</p></div>
     <div class="card ${rv()}"><h3>Defense</h3><p>The opponent's yardage rank (up to about 8% either way) plus how it defends his position.</p></div>
+    <div class="card ${rv()}"><h3>Injuries</h3><p>When a player is ruled out, his teammates inherit his workload: the next running back up takes most of his carries, and his targets spread across the other receivers. Each player keeps his own efficiency.</p></div>
     <div class="card ${rv()}"><h3>Conditions</h3><p>Wind and rain for passing, a small home-field bump, a turf speed bump, and a dome boost for passers.</p></div>
   </div>
   <div class="formula ${rv()}">Chance to beat the line = P(outcome &gt; line)</div>
