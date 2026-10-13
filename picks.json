@@ -10,7 +10,7 @@
         "legs": [
           { "player": "Justin Herbert", "market": "Passing yards", "side": "over", "line": 149.5, "odds": -380 },
           { "player": "Woody Marks", "market": "Rushing yards", "side": "over", "line": 39.5, "odds": -215 },
-          { "player": "Brenton Strange", "market": "Receptions", "side": "over", "line": 2.5 }
+          { "player": "Brenton Strange", "market": "Receptions", "side": "over", "line": 2.5, "odds": -400 }
         ]
       },
       "prop": { "player": "Jayden Daniels", "market": "Rushing yards", "side": "over", "line": 35.5, "odds": -114, "units": 2 }
