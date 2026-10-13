@@ -203,6 +203,10 @@ def player_table(use, rosters, rr, tr, season):
         share_x = (r["rxtd"] + r["cxtd"]) / max(team_xtd.get(team, 0), 1e-6)
         share_a = (r["rtd"] + r["ctd"]) / max(team_tds.get(team, 0), 1)
         share = 0.75 * share_x + 0.25 * share_a  # opportunity-based, nudged by actual scoring
+        # pull small samples toward what's typical for the position (weaker pull as games pile up)
+        base = {"QB": 0.05, "RB": 0.20, "WR": 0.12, "TE": 0.09}[pos]
+        w = min(0.85, 0.55 + games * 0.03)
+        share = w * share + (1 - w) * base
         # usage trend: last 3 games' share of team carries + targets vs the full sample
         g3 = last3.get(team, set())
         p3 = rush[(rush["rusher_player_id"] == r["id"]) & rush["game_id"].isin(g3)].shape[0] + \
@@ -305,8 +309,8 @@ def defense_vs_position(use, rosters, dgames, pr, rrk):
         row = {}
         for k in ["rb", "wr", "te", "qb"]:
             per = counts[t][k] / max(gms, 1)
-            # shrink toward league average so a two-game fluke doesn't dominate (4 games of league-average prior)
-            prior = 4
+            # shrink toward league average so a few fluky games don't dominate (10 games of league-average prior)
+            prior = 10
             row[k] = r1((per * gms + lg[k] * prior) / ((gms + prior) * max(lg[k], 1e-6)), 2) if lg[k] > 0 else 1.0
         row["pr"] = int(pr.get(t, 16))
         row["rr"] = int(rrk.get(t, 16))
