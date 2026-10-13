@@ -3,6 +3,7 @@ name: Update data and publish site
 on:
   schedule:
     - cron: "0 14 * * *"     # every day at 10:00 AM Eastern (14:00 UTC)
+    - cron: "45 16 * * 0"    # Sundays after inactives are announced (12:45 PM EDT / 11:45 AM EST)
   workflow_dispatch:          # adds a "Run workflow" button on the Actions tab
     inputs:
       force_props:
