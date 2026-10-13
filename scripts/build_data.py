@@ -104,11 +104,68 @@ def load_nflverse(season):
         log("depth charts unavailable:", e)
         depth = pd.DataFrame()
     try:
+        snaps = pdf(nfl.load_snap_counts([season]))
+    except Exception as e:
+        log("snap counts unavailable:", e)
+        snaps = pd.DataFrame()
+    try:
         inj = pdf(nfl.load_injuries([season]))
     except Exception as e:  # injury reports are not always published yet
         log("injuries unavailable:", e)
         inj = pd.DataFrame()
-    return sched, pbp, rosters, teams, inj, depth
+    return sched, pbp, rosters, teams, inj, depth, snaps
+
+
+SNAP_TEAM_FIX = {"GNB": "GB", "KAN": "KC", "NWE": "NE", "NOR": "NO", "SFO": "SF", "TAM": "TB", "LVR": "LV", "LAR": "LA",
+                 "RAM": "LA", "SDG": "LAC", "OAK": "LV", "STL": "LA", "HTX": "HOU", "CLT": "IND", "RAV": "BAL",
+                 "CRD": "ARI", "OTI": "TEN"}
+POS_GROUP = {"QB": "QB", "RB": "RB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE",
+             "T": "OL", "OT": "OL", "G": "OL", "OG": "OL", "C": "OL", "OL": "OL",
+             "DE": "DL", "DT": "DL", "NT": "DL", "DL": "DL", "EDGE": "DL",
+             "LB": "LB", "ILB": "LB", "OLB": "LB", "MLB": "LB",
+             "CB": "DB", "S": "DB", "SS": "DB", "FS": "DB", "DB": "DB", "SAF": "DB"}
+
+
+def build_snaps(snaps, season):
+    """Weekly offensive and defensive snap shares for every player on every team."""
+    if snaps is None or snaps.empty:
+        return None
+    d = snaps.copy()
+    if "game_type" in d.columns:
+        d = d[d["game_type"] == "REG"]
+    d = d[d["season"] == season]
+    if d.empty:
+        return None
+    d["team"] = d["team"].astype(str).map(lambda t: SNAP_TEAM_FIX.get(t, t))
+    for c in ["offense_snaps", "defense_snaps", "offense_pct", "defense_pct"]:
+        d[c] = pd.to_numeric(d.get(c, 0), errors="coerce").fillna(0)
+    scale = 100 if max(d["offense_pct"].max(), d["defense_pct"].max()) <= 1.5 else 1  # fractions or percents
+    weeks = sorted(int(w) for w in d["week"].unique())
+    played = d.groupby("team")["week"].apply(lambda x: set(int(w) for w in x)).to_dict()
+    pid = "pfr_player_id" if "pfr_player_id" in d.columns else "player"
+    out = {}
+    for (team, _), g in d.groupby(["team", pid]):
+        name = str(g["player"].iloc[0])
+        group = POS_GROUP.get(str(g["position"].iloc[0]).upper())
+        if not group:
+            continue  # kickers, punters, long snappers
+        side = "D" if g["defense_snaps"].sum() > g["offense_snaps"].sum() else "O"
+        col = "defense" if side == "D" else "offense"
+        if g[f"{col}_snaps"].sum() <= 0:
+            continue
+        by_week = {int(r["week"]): r for _, r in g.iterrows()}
+        pct, cnt = [], []
+        for w in weeks:
+            r = by_week.get(w)
+            if r is None:
+                pct.append(None if w not in played.get(team, set()) else 0)
+                cnt.append(None if w not in played.get(team, set()) else 0)
+            else:
+                pct.append(int(round(float(r[f"{col}_pct"]) * scale)))
+                cnt.append(int(r[f"{col}_snaps"]))
+        out.setdefault(team, []).append([name, group, side, pct, cnt])
+    byes = {t: [w for w in weeks if w not in played.get(t, set())] for t in out}
+    return {"weeks": weeks, "byes": byes, "teams": out}
 
 
 def depth_starting_qbs(depth):
@@ -582,7 +639,7 @@ def main():
     now = datetime.now(timezone.utc)
     season = int(os.environ.get("SEASON") or (now.year if now.month >= 8 else now.year - 1))
     log("season", season)
-    sched, pbp, rosters, teams_df, inj, depth = load_nflverse(season)
+    sched, pbp, rosters, teams_df, inj, depth, snaps = load_nflverse(season)
     depth_qbs = depth_starting_qbs(depth)
     overrides = load_overrides()
     week, games = upcoming_week(sched, season)
@@ -682,6 +739,7 @@ def main():
                   oddsSource="The Odds API" if lines else "nflverse", propsSource="The Odds API" if prop_out else None),
         TEAMS=colors, OFF={k: v for k, v in off.items()}, DEF=dvp, GAMES=out_games, P=players, NUM=nums,
         PROPLINES=prop_out,
+        SNAPS=build_snaps(snaps, season),
     )
     with open(OUT, "w") as f:
         json.dump(data, f, separators=(",", ":"), default=float)
