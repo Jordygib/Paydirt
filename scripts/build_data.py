@@ -776,7 +776,7 @@ def grade_picks(picks, prev, sched, pbp, rosters, snaps, season, now):
     if snaps is not None and not snaps.empty and "game_id" in snaps.columns:
         for _, r in snaps[pd.to_numeric(snaps.get("offense_snaps", 0), errors="coerce").fillna(0) > 0].iterrows():
             snapped[str(r["game_id"])].add(norm_name(r["player"]))
-    locked = {f"{w['season']}-{w['week']}": w for w in (prev or {}).get("PICKS", {}).get("weeks", [])}
+    locked = {f"{w['season']}-{w['week']}": w for w in (((prev or {}).get("PICKS") or {}).get("weeks") or [])}
     weeks_out = []
     for wk in picks["weeks"]:
         wseason, wnum = int(wk.get("season", season)), int(wk["week"])
