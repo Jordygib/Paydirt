@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<title>Paydirt – NFL touchdown & prop analytics</title>
+<title>TD Signal | NFL Anytime Touchdown Predictions & Prop Picks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -348,7 +348,13 @@ h2::before{content:"";display:inline-block;width:6px;height:.78em;margin-right:3
 h3{text-transform:uppercase}
 .lede{margin-top:14px}
 .brand{font-weight:900;letter-spacing:1px}
-.brand svg{transform:skewX(-14deg)}
+.brand svg{transform:skewX(-14deg);width:34px;height:28px}
+.brand b{color:var(--accent);margin-left:6px;text-shadow:0 0 18px var(--glow)}
+.brand .sig{animation:sig 2.4s ease-in-out infinite;opacity:.25}
+.brand .s2{animation-delay:.25s}.brand .s3{animation-delay:.5s}
+@keyframes sig{0%,100%{opacity:.2}30%{opacity:1}60%{opacity:.2}}
+.brand span{font-size:30px}
+@media (max-width:420px){.brand span{font-size:27px}}
 
 /* nav: slanted active tab */
 nav.main a{border-radius:0;z-index:0;text-transform:uppercase;font-family:var(--display);font-style:italic;font-weight:800;font-size:16px;letter-spacing:.3px}
@@ -431,9 +437,9 @@ nav.main a.on::after{display:none}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFA14A"/><stop offset="1" stop-color="#FF6A2B"/></linearGradient></defs></svg>
 <header class="top">
   <div class="bar">
-    <a class="brand" href="#/slate" aria-label="Paydirt home">
-      <svg viewBox="0 0 16 28" aria-hidden="true"><rect x="1" y="1" width="14" height="26" rx="3" fill="#FF6A2B"/><path d="M1 17 L15 9 L15 13 L1 21Z" fill="#fff" opacity=".9"/></svg>
-      <span>PAYDIRT</span>
+    <a class="brand" href="#/slate" aria-label="TD Signal home">
+      <svg viewBox="0 0 36 28" aria-hidden="true"><rect x="1" y="1" width="13" height="26" rx="2.5" fill="#FF6A2B"/><path d="M1 17L14 9.5V13.5L1 21Z" fill="#fff" opacity=".9"/><path class="sig s1" d="M19 8.5a8 8 0 0 1 0 11" fill="none" stroke="#FF6A2B" stroke-width="2.6" stroke-linecap="round"/><path class="sig s2" d="M24 4.5a13.5 13.5 0 0 1 0 19" fill="none" stroke="#FF6A2B" stroke-width="2.6" stroke-linecap="round"/><path class="sig s3" d="M29 1.5a18.5 18.5 0 0 1 0 25" fill="none" stroke="#FF6A2B" stroke-width="2.6" stroke-linecap="round"/></svg>
+      <span>TD<b>SIGNAL</b></span>
     </a>
     <nav class="main" id="nav">
       <a href="#/slate" data-r="slate">Slate</a>
@@ -814,7 +820,7 @@ function tdList(){
   return list.length?list.map(tdRow).join(""):emptyMsg();
 }
 function viewTD(){
-  return `<h1 class="${rv()}" data-ghost="Paydirt">Touchdown model</h1>
+  return `<h1 class="${rv()}" data-ghost="End zone">Touchdown model</h1>
   <p class="lede ${rv()}">Each player's chance to score at least once. The closer the ball is to the end zone, the likelier the score. Tap any player for the math.</p>
   <div class="filters ${rv()}">${searchBox()}<div class="seg" id="posSeg">${["All","QB","RB","WR","TE"].map(p=>`<button data-pos="${p}" class="${tdState.pos===p?"on":""}">${p==="All"?"All":p}</button>`).join("")}</div></div>
   <div class="list" id="listBox" data-kind="td">${tdList()}</div>`;
@@ -986,7 +992,7 @@ function viewGame(id){
 
 function viewMethod(){
   return `<h1 class="${rv()}" data-ghost="Playbook">How it works</h1>
-  <p class="lede ${rv()}">Every number on Paydirt comes from a chain of simple, visible steps. Here's the math behind both models.</p>
+  <p class="lede ${rv()}">Every number on TD Signal comes from a chain of simple, visible steps. Here's the math behind both models.</p>
   <h2 class="${rv()}">Touchdown model</h2>
   <div class="formula ${rv()}">Expected TDs = team TDs × player share × defense × weather × usage trend</div>
   <div class="formula ${rv()}">Chance to score = 1 − e<sup>−expected TDs</sup></div>
