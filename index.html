@@ -180,6 +180,20 @@ a.card:hover,.lift:hover{border-color:var(--line2);transform:translateY(-2px)}
 .search input::placeholder{color:var(--faint)}
 .search input::-webkit-search-cancel-button{filter:invert(.7);cursor:pointer}
 .nofx .rv{animation:none!important}
+.teampick{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;margin-top:22px;scrollbar-width:thin}
+.teampick button{flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 10px 6px;border-radius:13px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-family:var(--display);font-weight:800;font-size:14px;color:var(--muted);transition:border-color .2s,transform .2s,color .2s}
+.teampick button:hover{transform:translateY(-2px);color:var(--ink)}
+.teampick button.on{border-color:rgba(255,106,43,.6);color:var(--ink);box-shadow:0 0 0 3px var(--accent-soft)}
+table.snaps th.c,table.snaps td.c{text-align:center}
+table.snaps td.sn{padding:5px 4px;text-align:center}
+table.snaps td.sn span{display:inline-block;min-width:50px;padding:6px 4px;border-radius:9px;font-family:var(--display);font-weight:800;font-size:16px}
+table.snaps td.sn .dash{color:var(--faint);background:none}
+table.snaps td.bye span{font-family:var(--body);font-size:11px;font-weight:700;color:var(--faint);background:repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 5px,transparent 5px 10px)}
+table.snaps .stick{position:sticky;left:0;z-index:1;background:var(--surface)}
+.snm{display:flex;align-items:center;gap:10px;font-weight:700}
+.snm small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+.trend{font-weight:700;font-size:13px;color:var(--muted);white-space:nowrap}
+.trend.up{color:var(--turf)}.trend.down{color:var(--ice)}
 .who .nm small.role{color:var(--turf);font-weight:700;margin-top:1px}
 .who .nm small.role::before{content:"▲ ";font-size:9px}
 .cd-short{display:block;margin-top:5px;font-size:12px;font-weight:600;color:var(--accent2);white-space:nowrap}
@@ -332,9 +346,9 @@ tr:last-child td{border-bottom:0}
       <a href="#/slate" data-r="slate">Slate</a>
       <a href="#/td" data-r="td">TD model</a>
       <a href="#/props" data-r="props">Props</a>
+      <a href="#/snaps" data-r="snaps">Snaps</a>
       <a href="#/defense" data-r="defense">Defenses</a>
       <a href="#/method" data-r="method">How it works</a>
-      <a href="#/nba" data-r="nba">NBA<span class="soon">soon</span></a>
     </nav>
   </div>
   <div class="ticker" id="ticker"></div>
@@ -342,7 +356,7 @@ tr:last-child td{border-bottom:0}
 <main id="app"></main>
 <script>
 // ---------- Sample data ----------
-let META=null,PROPLINES={},LIVE=false;
+let META=null,PROPLINES={},LIVE=false,SNAPS=null;
 let TEAMS={
  BUF:{n:"Buffalo Bills",c:"#2F6BFF"},KC:{n:"Kansas City Chiefs",c:"#E31837"},DET:{n:"Detroit Lions",c:"#0076B6"},
  GB:{n:"Green Bay Packers",c:"#FFB612"},PHI:{n:"Philadelphia Eagles",c:"#1FA39B"},DAL:{n:"Dallas Cowboys",c:"#869397"},
@@ -749,6 +763,71 @@ function defTable(teams){
   <thead><tr><th>Defense</th><th class="r">vs RB TDs</th><th class="r">vs WR TDs</th><th class="r">vs TE TDs</th><th class="r">QB rush TDs</th><th class="r">Pass yds rank</th><th class="r">Rush yds rank</th><th class="r">Red zone TD%</th></tr></thead>
   <tbody>${teams.map(t=>{const d=DEF[t];return `<tr><td><span class="tname">${shield(t,36)}${TEAMS[t].n}</span></td>${["rb","wr","te","qb"].map(k=>heatCell(d[k])).join("")}<td class="r num">${d.pr}</td><td class="r num">${d.rr}</td><td class="r num">${d.rz}%</td></tr>`}).join("")}</tbody></table></div>`;
 }
+// ---------- Snap counts ----------
+function sampleSnaps(){
+  // demo data built from the sample players so the prototype shows the layout
+  const weeks=[1,2,3,4,5],teams={},h=(str)=>{let x=0;for(const c of str)x=(x*31+c.charCodeAt(0))%997;return x};
+  P.forEach(p=>{
+    const base=p.pos==="QB"?100:p.snap;
+    const pct=weeks.map(w=>Math.max(0,Math.min(100,Math.round(base+((h(p.name+w)%21)-10)*(p.pos==="QB"?0:1)+(w-3)*p.trend*2))));
+    (teams[p.team]=teams[p.team]||[]).push([p.name,p.pos,"O",pct,pct.map(v=>Math.round(v*.64))]);
+  });
+  return {weeks,byes:{},teams,sample:true};
+}
+let snapState={team:null,side:"O",pos:"All"};
+const POS_ORDER={QB:0,RB:1,WR:2,TE:3,OL:4,DL:5,LB:6,DB:7};
+function snapRows(S){
+  const q=qnorm(query).trim();
+  let rows=[];
+  const teams=q?Object.keys(S.teams):[snapState.team];
+  teams.forEach(t=>(S.teams[t]||[]).forEach(r=>{
+    const [name,pos,side]=r;
+    if(q){ if(!matchQ({name,team:t})) return; }
+    else if(side!==snapState.side||(snapState.pos!=="All"&&pos!==snapState.pos)) return;
+    const played=r[3].map((v,i)=>[v,i]).filter(([v])=>v!==null&&v>0);
+    const avg=played.length?played.reduce((a,[v])=>a+v,0)/played.length:0;
+    const lastI=r[3].map((v,i)=>v!==null?i:-1).filter(i=>i>=0).pop();
+    const last=lastI!==undefined?r[3][lastI]:null;
+    rows.push({t,name,pos,side,pct:r[3],cnt:r[4],avg,last});
+  }));
+  return rows.sort((a,b)=>(q?0:(POS_ORDER[a.pos]-POS_ORDER[b.pos]))||b.avg-a.avg);
+}
+function snapCell(v,c,bye){
+  if(bye) return `<td class="sn bye"><span>Bye</span></td>`;
+  if(v===null||v===0) return `<td class="sn"><span class="dash">–</span></td>`;
+  const a=Math.round(Math.min(v,100)*.62);
+  return `<td class="sn" title="${c} snaps"><span style="background:color-mix(in srgb,var(--accent) ${a}%,var(--surface2));${v>=70?"color:#fff":""}">${v}%</span></td>`;
+}
+function snapTable(S){
+  const rows=snapRows(S), q=qnorm(query).trim();
+  if(!rows.length) return q?emptyMsg():`<div class="card empty" style="padding:40px 20px">${S.sample&&snapState.side==="D"?"Defensive snap counts appear with live data.":"No players at this position yet."}</div>`;
+  const byes=t=>new Set((S.byes||{})[t]||[]);
+  return `<div class="card scroll"><table class="snaps"><thead><tr><th class="stick">Player</th><th>Pos</th>${S.weeks.map(w=>`<th class="c">Wk ${w}</th>`).join("")}<th class="c">Avg</th><th class="c">Trend</th></tr></thead><tbody>
+  ${rows.map(r=>{const by=byes(r.t),d=r.last!==null&&r.avg?r.last-r.avg:0;
+    return `<tr><td class="stick"><span class="snm">${shield(r.t,26)}<span>${esc(r.name)}${q?`<small>${r.t}</small>`:""}</span></span></td><td class="muted">${r.pos}</td>
+    ${S.weeks.map((w,i)=>snapCell(r.pct[i],r.cnt[i],by.has(w))).join("")}
+    <td class="c num" style="font-size:18px">${Math.round(r.avg)}%</td>
+    <td class="c"><span class="trend ${d>4?"up":d<-4?"down":""}">${d>4?"▲":d<-4?"▼":"●"} ${d>0?"+":""}${Math.round(d)}</span></td></tr>`}).join("")}
+  </tbody></table></div>`;
+}
+function viewSnaps(){
+  const S=SNAPS||sampleSnaps();
+  const teams=Object.keys(S.teams).sort();
+  if(!snapState.team||!S.teams[snapState.team]){const n=typeof nextGame==="function"&&nextGame();snapState.team=n&&S.teams[n.away]?n.away:teams[0]}
+  const posList=snapState.side==="O"?["All","QB","RB","WR","TE","OL"]:["All","DL","LB","DB"];
+  if(!posList.includes(snapState.pos)) snapState.pos="All";
+  const last=S.weeks[S.weeks.length-1];
+  return `<h1 class="${rv()}">Snap counts</h1>
+  <p class="lede ${rv()}">Every player's share of his team's snaps, week by week. Rising snap shares are often the first sign of a bigger role, before the stats catch up. Updated through Week ${last}.${S.sample?" Showing sample data.":""}</p>
+  <div class="teampick ${rv()}" id="teamPick">${teams.map(t=>`<button data-team="${t}" class="${snapState.team===t?"on":""}" title="${(TEAMS[t]||{}).n||t}">${TEAMS[t]?shield(t,30):""}<span>${t}</span></button>`).join("")}</div>
+  <div class="filters ${rv()}">${searchBox()}
+    <div class="seg" id="sideSeg">${[["O","Offense"],["D","Defense"]].map(([k,l])=>`<button data-side="${k}" class="${snapState.side===k?"on":""}">${l}</button>`).join("")}</div>
+    <div class="seg" id="snapPos">${posList.map(p=>`<button data-sp="${p}" class="${snapState.pos===p?"on":""}">${p}</button>`).join("")}</div>
+  </div>
+  <div id="listBox" data-kind="snaps" class="${rv()}">${snapTable(S)}</div>
+  <p class="small" style="margin-top:12px">Cells show the share of the team's offensive or defensive snaps; hover for the exact count. Trend compares his latest game to his season average.</p>`;
+}
+
 function viewDefense(){
   const teams=Object.keys(DEF).sort((a,b)=>(DEF[b].rb+DEF[b].wr+DEF[b].te)-(DEF[a].rb+DEF[a].wr+DEF[a].te));
   return `<h1 class="${rv()}">Defenses</h1>
@@ -809,7 +888,6 @@ function viewMethod(){
   <div class="formula ${rv()}">Chance to beat the line = P(outcome &gt; line)</div>
   <p class="note ${rv()}">Receptions use a Poisson distribution and yardage uses a normal distribution with a spread that fits each stat (passing yards are steadier than receiving yards). The floor and ceiling cover the middle 80% of outcomes. For now the line is the half-point nearest each player's season average; once sportsbook lines are connected, they'll replace it so you can see true value.</p>`;
 }
-function viewNBA(){return `<div class="empty"><h1 class="${rv()}">NBA is next</h1><p class="lede ${rv()}" data-x="1"><span style="display:block;margin:0 auto">The same approach (pace, usage, and defense vs position) will power points, rebounds, and assists projections.</span></p><p class="${rv()}"><a href="#/slate">Back to the NFL slate</a></p></div>`}
 
 // ---------- Dynamics ----------
 function animateCounts(){
@@ -852,7 +930,7 @@ function render(){
   rvI=0;
   const h=location.hash.replace(/^#\/?/,"")||"slate";
   const [r,arg]=h.split("/");
-  const views={slate:viewSlate,td:viewTD,props:viewProps,defense:viewDefense,method:viewMethod,nba:viewNBA,game:()=>viewGame(arg)};
+  const views={slate:viewSlate,td:viewTD,props:viewProps,defense:viewDefense,method:viewMethod,snaps:viewSnaps,game:()=>viewGame(arg)};
   document.getElementById("app").innerHTML=(views[r]||viewSlate)();
   document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("on",a.dataset.r===r||(r==="game"&&a.dataset.r==="slate")||(!views[r]&&a.dataset.r==="slate")));
   animateCounts();animateRings();bind();tickCountdowns();
@@ -863,9 +941,13 @@ function bind(){
     query=q.value;
     const box=document.getElementById("listBox");
     box.classList.add("nofx");
-    box.innerHTML=box.dataset.kind==="td"?tdList():propList();
+    box.innerHTML=box.dataset.kind==="td"?tdList():box.dataset.kind==="snaps"?snapTable(SNAPS||sampleSnaps()):propList();
     animateRings(box);
   };
+  document.querySelectorAll("#teamPick button").forEach(b=>b.onclick=()=>{snapState.team=b.dataset.team;query="";render()});
+  document.querySelectorAll("#sideSeg button").forEach(b=>b.onclick=()=>{snapState.side=b.dataset.side;render()});
+  document.querySelectorAll("#snapPos button").forEach(b=>b.onclick=()=>{snapState.pos=b.dataset.sp;render()});
+  const tp=document.querySelector("#teamPick .on");if(tp)tp.scrollIntoView({block:"nearest",inline:"center"});
   document.querySelectorAll("#posSeg button").forEach(b=>b.onclick=()=>{tdState.pos=b.dataset.pos;render()});
   document.querySelectorAll("#statSeg button").forEach(b=>b.onclick=()=>{propState.stat=b.dataset.stat;render()});
   document.querySelectorAll("#sortSeg button").forEach(b=>b.onclick=()=>{propState.sort=b.dataset.sort;render()});
@@ -882,7 +964,7 @@ async function loadLive(){
     if(!res||!res.ok) return false;
     const d=await res.json();
     if(!d||!d.GAMES||!d.GAMES.length||!d.P||!d.P.length) return false;
-    META=d.meta;TEAMS=d.TEAMS;OFF=d.OFF;DEF=d.DEF;GAMES=d.GAMES;P=d.P;PROPLINES=d.PROPLINES||{};NUM=Object.assign({},NUM,d.NUM||{});
+    META=d.meta;TEAMS=d.TEAMS;OFF=d.OFF;DEF=d.DEF;GAMES=d.GAMES;P=d.P;PROPLINES=d.PROPLINES||{};SNAPS=d.SNAPS||null;NUM=Object.assign({},NUM,d.NUM||{});
     P=P.filter(p=>TEAMS[p.team]&&OFF[p.team]&&gameOf(p.team));
     return true;
   }catch(e){return false}
