@@ -470,15 +470,15 @@ const normCdf=z=>.5*(1+erf(z/Math.SQRT2));
 function poisOver(mean,line){let k=Math.floor(line),p=Math.exp(-mean),c=p;for(let i=1;i<=k;i++){p*=mean/i;c+=p}return 1-c}
 const benchLine=avg=>Math.floor(avg)+.5; // nearest half-point, so there is no push
 // rank 1 = stingiest defense -> fewer yards; rank 32 -> more yards (about +/-12%)
-const rankAdj=r=>1+(r-16.5)/31*.24;
+const rankAdj=r=>1+(r-16.5)/31*.16; // rank 1 to 32 moves yards about 8% either way
 
 function teamCtx(t){
   const g=gameOf(t),opp=oppOf(t),home=g.home===t;
   const spreadTeam=home?g.spread:-g.spread; // negative = favored
-  const pace=(OFF[t][3]+OFF[opp][3])/2;
-  const plays=pace*(1+(g.total-45)*.004);
+  const pace=OFF[t][3]*.7+OFF[opp][3]*.3; // a team mostly sets its own pace
+  const plays=pace*(1+(g.total-45)*.003);
   const basePR=OFF[t][4];
-  const passRate=clamp(basePR+spreadTeam*.6,35,72)/100; // underdogs throw more, favorites run more
+  const passRate=clamp(basePR+spreadTeam*.35,35,72)/100; // underdogs throw more, favorites run more
   const basePass=OFF[t][3]*basePR/100, baseRush=OFF[t][3]*(1-basePR/100);
   return {g,opp,home,spreadTeam,plays,pace,passRate,basePR,passAtt:plays*passRate,rushAtt:plays*(1-passRate),basePass,baseRush,
     homeAdj:home?1.015:1, turfAdj:/turf/i.test(g.st.surface)?1.02:1, wxPass:wxYds(g,"pass"), wxRush:wxYds(g,"rush")};
@@ -512,12 +512,17 @@ function buildProp(p,stat){
     F("Pace",c.plays/OFF[p.team][3]);F("Game script",(1-c.passRate)/(1-c.basePR/100));F(`${c.opp} run D`,rankAdj(d.rr));F(`${c.opp} vs ${p.pos}s`,dAdj);
     F("Weather",c.wxRush);F("Home field",c.homeAdj);F("Surface",c.turfAdj);F("Usage trend",trend);
   } else { // Passing yards
-    const ypa=p.passYd/c.basePass*rankAdj(d.pr)*((d.wr+d.te)/2*.5+.5)*c.wxPass*c.homeAdj*(c.g.wx.indoor?1.02:1);
+    const pD=Math.sqrt(rankAdj(d.pr)*((d.wr+d.te)/2*.3+.7)); // yards allowed and TDs allowed to receivers, blended into one pass-defense number
+    const ypa=p.passYd/c.basePass*pD*c.wxPass*c.homeAdj*(c.g.wx.indoor?1.02:1);
     r.avg=p.passYd;r.proj=c.passAtt*ypa;r.kind="yds";r.cv=CV.passYd;
     r.chain=[[f1(c.plays),"Projected plays"],[Math.round(c.passRate*100)+"%","Pass rate"],[f1(c.passAtt),"Pass attempts"],[f1(ypa),"Yards per attempt"],[Math.round(r.proj),"Passing yards"]];
-    F("Pace",c.plays/OFF[p.team][3]);F("Game script",c.passRate/(c.basePR/100));F(`${c.opp} pass D`,rankAdj(d.pr));F(`${c.opp} vs receivers`,(d.wr+d.te)/2*.5+.5);
+    F("Pace",c.plays/OFF[p.team][3]);F("Game script",c.passRate/(c.basePR/100));F(`${c.opp} pass defense`,pD);
     F("Weather",c.wxPass);F("Home field",c.homeAdj);F("Dome",c.g.wx.indoor?1.02:1);
   }
+  const raw=r.proj, last=r.chain[r.chain.length-1];
+  r.proj=r.avg+(raw-r.avg)*.75; // 75% model, 25% his own season average keeps stacked adjustments in check
+  last[1]="Model";
+  r.chain.push([r.kind==="count"?f1(r.proj):Math.round(r.proj),`Final ${stat.toLowerCase()} (75% model, 25% avg)`]);
   const bk=(PROPLINES[p.name]||{})[stat];
   r.book=bk||null; r.line=bk?bk.line:benchLine(r.avg);
   if(r.kind==="count"){r.over=poisOver(r.proj,r.line);const sd=Math.sqrt(r.proj);r.lo=Math.max(0,r.proj-1.28*sd);r.hi=r.proj+1.28*sd;}
@@ -789,12 +794,13 @@ function viewMethod(){
   <h2 class="${rv()}">Prop model</h2>
   <div class="formula ${rv()}">Volume = plays × pass or run rate × target or carry share</div>
   <div class="formula ${rv()}">Projection = volume × efficiency × defense × weather × venue × role</div>
+  <div class="formula ${rv()}">Final = 75% model projection + 25% season average</div>
   <div class="steps">
-    <div class="card ${rv()}"><h3>Pace</h3><p>Both teams' plays per game averaged, then nudged up for high totals and down for low ones.</p></div>
-    <div class="card ${rv()}"><h3>Game script</h3><p>Underdogs throw more and favorites run more: each point of spread shifts pass rate about 0.6%.</p></div>
+    <div class="card ${rv()}"><h3>Pace</h3><p>Mostly the team's own plays per game, partly the opponent's, nudged for high or low totals.</p></div>
+    <div class="card ${rv()}"><h3>Game script</h3><p>Underdogs throw more and favorites run more: each point of spread shifts pass rate about a third of a percent.</p></div>
     <div class="card ${rv()}"><h3>Volume</h3><p>Team pass attempts or carries times the player's target or carry share, adjusted for his usage trend.</p></div>
     <div class="card ${rv()}"><h3>Efficiency</h3><p>Catch rate and yards per catch, carry, or attempt from his season, the core of each projection.</p></div>
-    <div class="card ${rv()}"><h3>Defense</h3><p>The opponent's yardage rank (up to about 12% either way) plus how it defends his position.</p></div>
+    <div class="card ${rv()}"><h3>Defense</h3><p>The opponent's yardage rank (up to about 8% either way) plus how it defends his position.</p></div>
     <div class="card ${rv()}"><h3>Conditions</h3><p>Wind and rain for passing, a small home-field bump, a turf speed bump, and a dome boost for passers.</p></div>
   </div>
   <div class="formula ${rv()}">Chance to beat the line = P(outcome &gt; line)</div>
