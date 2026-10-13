@@ -278,14 +278,58 @@ def player_table(use, rosters, rr, tr, season):
     return pd.DataFrame(rows)
 
 
+def short_name(n):
+    parts = str(n).split()
+    return f"{parts[0][0]}. {' '.join(parts[1:])}" if len(parts) > 1 else str(n)
+
+
+def redistribute(t, out_ids):
+    """Hand ruled-out players' workload to healthy teammates. Volume moves; each player keeps his own efficiency."""
+    t = t.copy()
+    t["role"] = ""
+    gone = t[t["id"].isin(out_ids) & (t["use3"] > 0)]
+    healthy = t[~t["id"].isin(out_ids)]
+    for _, o in gone.iterrows():
+        if o["pos"] == "RB":
+            heirs = healthy[healthy["pos"] == "RB"].sort_values(["use3", "rush"], ascending=False).head(2)
+            weights = [0.60, 0.25][:len(heirs)]
+        elif o["pos"] in ("WR", "TE"):
+            heirs = healthy[healthy["pos"].isin(["WR", "TE"]) & (healthy["tgt"] > 0)]
+            tot = heirs["tgt"].sum()
+            weights = list(0.75 * heirs["tgt"] / tot) if tot > 0 else []
+        else:
+            continue  # QB changes are handled by starter selection
+        for (idx, h), w in zip(heirs.iterrows(), weights):
+            ypc = h["rushYd"] / h["rush"] if h["rush"] > 0 else 4.2
+            ypt = h["recYd"] / h["tgt"] if h["tgt"] > 0 else 7.0
+            cr = h["rec"] / h["tgt"] if h["tgt"] > 0 else 0.65
+            add_rush, add_tgt = w * o["rush"], w * o["tgt"]
+            t.loc[idx, "rush"] = r1(h["rush"] + add_rush)
+            t.loc[idx, "rushYd"] = r1(h["rushYd"] + add_rush * ypc)
+            t.loc[idx, "tgt"] = r1(h["tgt"] + add_tgt)
+            t.loc[idx, "rec"] = r1(h["rec"] + add_tgt * cr)
+            t.loc[idx, "recYd"] = r1(h["recYd"] + add_tgt * ypt)
+            t.loc[idx, "share"] = r1(h["share"] + w * o["share"], 3)
+            t.loc[idx, "snap"] = int(round(h["snap"] + w * o["snap"]))
+            t.loc[idx, "use3"] = int(h["use3"] + w * o["use3"])
+            note = f"Expanded role, {short_name(o['name'])} out"
+            t.loc[idx, "role"] = note if not t.loc[idx, "role"] else t.loc[idx, "role"] + f", {short_name(o['name'])}"
+            healthy = t[~t["id"].isin(out_ids)]
+    return t
+
+
 def pick_players(pt, teams_playing, injuries, depth_qbs, overrides):
-    """Pick each team's current starters: QB from depth chart or the latest game, others by last-3-game usage."""
+    """Pick each team's current starters: QB from depth chart or the latest game, others by last-3-game usage.
+    Players ruled out (injury report or overrides exclude list) have their workload redistributed first."""
     out = []
     pt = pt.assign(_n=pt["name"].map(norm_name))
     for team in teams_playing:
-        t = pt[(pt["team"] == team) & ~pt["id"].isin(injuries.get("out", set())) & ~pt["_n"].isin(overrides["exclude"])]
-        if t.empty:
+        allp = pt[pt["team"] == team]
+        if allp.empty:
             continue
+        out_ids = set(allp[allp["id"].isin(injuries.get("out", set())) | allp["_n"].isin(overrides["exclude"])]["id"])
+        allp = redistribute(allp, out_ids)
+        t = allp[~allp["id"].isin(out_ids)]
         qbs = t[t["pos"] == "QB"]
         forced = overrides["starting_qb"].get(team)
         if forced and (qbs["_n"] == forced).any():
@@ -298,7 +342,7 @@ def pick_players(pt, teams_playing, injuries, depth_qbs, overrides):
         wr = t[t["pos"] == "WR"].sort_values(["use3", "tgt"], ascending=False).head(3)
         te = t[t["pos"] == "TE"].sort_values(["use3", "tgt"], ascending=False).head(1)
         picked = pd.concat([qb, rb, wr, te])
-        out.append(picked[picked["use3"] + picked["att3"] > 0])  # drop anyone with no role in the last 3 games
+        out.append(picked[picked["use3"] + picked["att3"] > 0])
     return pd.concat(out) if out else pt.iloc[0:0]
 
 
@@ -618,6 +662,8 @@ def main():
         p = {k: (v.item() if hasattr(v, "item") else v) for k, v in p.items()}
         if r["id"] in injuries["q"]:
             p["inj"] = "Q"
+        if r.get("role"):
+            p["role"] = r["role"]
         players.append(p)
         if r.get("num") is not None and not pd.isna(r.get("num")):
             nums[p["name"]] = int(r["num"])
