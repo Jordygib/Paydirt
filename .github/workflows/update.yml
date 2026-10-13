@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build
+  build:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -59,4 +59,3 @@ jobs:
 
       - id: deployment
         uses: actions/deploy-pages@v4
-      
