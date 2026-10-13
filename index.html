@@ -7,7 +7,7 @@
 <title>Paydirt – NFL touchdown & prop analytics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   color-scheme:dark;
@@ -16,7 +16,7 @@
   --accent:#FF6A2B; --accent2:#FFA14A; --accent-soft:rgba(255,106,43,.14); --glow:rgba(255,106,43,.5);
   --ice:#62A0FF; --ice-soft:rgba(98,160,255,.14); --turf:#34D27F; --turf-soft:rgba(52,210,127,.13);
   --track:rgba(255,255,255,.06); --tick:rgba(255,255,255,.10);
-  --display:"Big Shoulders Display","Arial Narrow","Roboto Condensed",sans-serif;
+  --display:"Barlow Condensed","Arial Narrow","Roboto Condensed",sans-serif;
   --body:"Barlow","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
@@ -336,6 +336,94 @@ tr:last-child td{border-bottom:0}
 @keyframes fly{0%{transform:translate(0,0) rotate(0) scale(.4);opacity:1}70%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--r)) scale(1);opacity:0}}
 @keyframes ripple{from{transform:scale(.3);opacity:.9}to{transform:scale(2.2);opacity:0}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.ticker .track{animation:none!important}}
+
+/* ===================== Broadcast package ===================== */
+main{overflow-x:clip}
+h1,h2,h3,.num,.pc,.f-pct,.proj,.fact b,.pill b,.step b,.cd-unit b,.time,.rank,.side-t .ab,.side-t .pt,.nk-m,.brand,.av .jn,.ring b,.grade,.cond b,.thr em,.sn span,.teampick button,.mid .k{font-style:italic}
+h1{position:relative;text-transform:uppercase;font-weight:900;letter-spacing:-.5px;font-size:clamp(46px,7.4vw,84px);line-height:.9}
+h1::before{content:attr(data-ghost);position:absolute;left:-.06em;top:-.42em;z-index:-1;font-size:2.15em;line-height:1;white-space:nowrap;color:transparent;-webkit-text-stroke:1.5px rgba(255,255,255,.07);letter-spacing:1px;pointer-events:none}
+h1::after{content:"";display:inline-block;width:.62em;height:.36em;margin-left:.22em;vertical-align:.12em;background:repeating-linear-gradient(115deg,var(--accent) 0 5px,transparent 5px 10px)}
+h2{text-transform:uppercase;font-weight:900;letter-spacing:.2px;font-size:32px}
+h2::before{content:"";display:inline-block;width:6px;height:.78em;margin-right:32px;vertical-align:-.02em;background:var(--accent);transform:skewX(-16deg);box-shadow:9px 0 0 rgba(255,106,43,.45),18px 0 0 rgba(255,106,43,.18)}
+h3{text-transform:uppercase}
+.lede{margin-top:14px}
+.brand{font-weight:900;letter-spacing:1px}
+.brand svg{transform:skewX(-14deg)}
+
+/* nav: slanted active tab */
+nav.main a{border-radius:0;z-index:0;text-transform:uppercase;font-family:var(--display);font-style:italic;font-weight:800;font-size:16px;letter-spacing:.3px}
+nav.main a:hover{background:none}
+nav.main a::before{content:"";position:absolute;inset:3px -2px;z-index:-1;background:rgba(255,255,255,.05);clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);opacity:0;transition:opacity .2s}
+nav.main a:hover::before{opacity:1}
+nav.main a.on{color:#160A03}
+nav.main a.on::before{opacity:1;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 20px var(--glow)}
+nav.main a.on::after{display:none}
+
+/* bottom-line ticker */
+.tickwrap{display:flex;align-items:stretch;border-top:1px solid var(--line)}
+.tickwrap .ticker{border-top:0;flex:1;min-width:0}
+.tlabel{flex:none;display:flex;align-items:center;gap:8px;padding:0 24px 0 16px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#160A03;font-family:var(--display);font-style:italic;font-weight:900;font-size:15px;text-transform:uppercase;letter-spacing:.6px;clip-path:polygon(0 0,100% 0,calc(100% - 14px) 100%,0 100%)}
+.tlabel i{width:7px;height:7px;border-radius:50%;background:#160A03;animation:pulse 1.4s ease-in-out infinite}
+.ticker a span{font-style:italic;font-size:19px}
+
+/* cut-corner panels */
+.card{border-radius:3px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px))}
+.card::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(225deg,transparent 11.8px,var(--accent) 11.8px,var(--accent) 14px,transparent 14px) top right/28px 28px no-repeat,
+             linear-gradient(45deg,transparent 11.8px,rgba(255,255,255,.22) 11.8px,rgba(255,255,255,.22) 13.4px,transparent 13.4px) bottom left/28px 28px no-repeat}
+.fact,.pill,.step,.cd-unit{border-radius:2px;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)}
+.av{border-radius:4px;clip-path:polygon(0 0,calc(100% - 9px) 0,100% 9px,100% 100%,9px 100%,0 calc(100% - 9px))}
+.av.lg{clip-path:polygon(0 0,calc(100% - 13px) 0,100% 13px,100% 100%,13px 100%,0 calc(100% - 13px))}
+
+/* slanted controls */
+.seg{border-radius:0;padding:3px 10px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.seg button{border-radius:0;padding:8px 18px;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);font-family:var(--display);font-style:italic;font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.3px}
+.seg button.on{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#160A03;box-shadow:none}
+.search{border-radius:0;padding:0 22px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.badge{border-radius:0;padding:5px 16px;clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%);font-family:var(--display);font-style:italic;font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:.5px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#160A03}
+.badge svg{color:#160A03}
+.grade{border-radius:0;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);width:38px}
+.chips span{border-radius:0;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);padding:4px 13px;font-family:var(--display);font-style:italic;font-size:14px;text-transform:uppercase}
+.teampick button{border-radius:0;clip-path:polygon(0 0,calc(100% - 9px) 0,100% 9px,100% 100%,9px 100%,0 calc(100% - 9px))}
+.teampick button.on{background:linear-gradient(180deg,rgba(255,106,43,.25),var(--surface));box-shadow:none}
+.sample{font-family:var(--display);font-style:italic;font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.4px}
+
+/* score bug game rows */
+.gr{grid-template-columns:96px minmax(0,1fr) 170px 170px}
+.gr .time{font-size:24px;line-height:1}
+.bug{display:flex;align-items:center;gap:8px;min-width:0}
+.slab{flex:1;min-width:0;max-width:220px;display:flex;align-items:center;gap:6px;padding:5px 6px 5px 10px;background:linear-gradient(100deg,color-mix(in srgb,var(--tc) 60%,transparent),color-mix(in srgb,var(--tc) 10%,transparent) 75%);clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.slab b{flex:1;font-family:var(--display);font-style:italic;font-weight:900;font-size:30px;line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.4)}
+.slab .sc{flex:none;min-width:54px;padding:5px 12px;text-align:center;background:#03050A;color:var(--ink);font-family:var(--display);font-style:italic;font-weight:800;font-size:20px;line-height:1;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.bug .at{flex:none;font-family:var(--display);font-style:italic;font-weight:900;font-size:18px;color:var(--faint)}
+.thr em{font-size:24px}
+@media (max-width:760px){.gr .bug{grid-column:1/-1;order:-1}.slab{max-width:none}.slab b{font-size:24px}}
+
+.who .nm{font-family:var(--display);font-style:italic;font-weight:800;font-size:18px;text-transform:uppercase;letter-spacing:.2px}
+.who .nm small{font-family:var(--body);font-style:normal;text-transform:none;letter-spacing:0;font-size:13px}
+.pr-stat{font-family:var(--display);font-style:italic;font-weight:800;font-size:17px;text-transform:uppercase}
+.pr-stat small{font-family:var(--body);font-style:normal;text-transform:none;font-weight:500}
+.nk-t,.thr{text-transform:uppercase;font-family:var(--display);font-style:italic;font-weight:700;letter-spacing:.3px}
+.thr b{font-family:var(--body);font-style:normal;text-transform:none}
+.back{font-family:var(--display);font-style:italic;text-transform:uppercase;font-weight:800}
+
+/* top-play spotlight */
+.feature{overflow:hidden}
+.feature>*:not(.bignum):not(.play):not(.glint){position:relative;z-index:1}
+.bignum{position:absolute;right:-.04em;bottom:-.22em;z-index:0;font-family:var(--display);font-style:italic;font-weight:900;font-size:clamp(220px,30vw,360px);line-height:1;color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.07);pointer-events:none}
+.play{position:absolute;right:21%;top:4%;width:min(30%,320px);height:auto;z-index:0;opacity:.14;pointer-events:none}
+@media (max-width:760px){.play{right:3%;width:44%;opacity:.12}}
+.play .rt{stroke-dasharray:1;stroke-dashoffset:1;animation:route 6s ease-in-out infinite}
+@keyframes route{0%{stroke-dashoffset:1;opacity:1}35%{stroke-dashoffset:0}80%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+.glint{position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.07) 50%,transparent 58%) no-repeat;background-size:250% 100%;animation:glint 7s ease-in-out infinite}
+@keyframes glint{0%,55%{background-position:130% 0}100%{background-position:-130% 0}}
+.f-name{text-transform:uppercase;font-style:italic;font-weight:900}
+.f-pct{font-weight:900}
+
+/* game page header */
+.side-t .ab{font-weight:900}
+.gh .wash{opacity:1}
+.gh::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:repeating-linear-gradient(115deg,rgba(255,255,255,.025) 0 2px,transparent 2px 14px)}
 </style>
 </head>
 <body>
@@ -356,7 +444,7 @@ tr:last-child td{border-bottom:0}
       <a href="#/method" data-r="method">How it works</a>
     </nav>
   </div>
-  <div class="ticker" id="ticker"></div>
+  <div class="tickwrap"><span class="tlabel"><i></i>Top plays</span><div class="ticker" id="ticker"></div></div>
 </header>
 <main id="app"></main>
 <script>
@@ -655,15 +743,27 @@ function viewSlate(){
     const im=wxImpact(g),best=ALL.find(x=>x.m.g===g);
     return `<a class="card ${rv()}" href="#/game/${g.id}"><div class="gr">
       <div class="time">${g.time.replace(" ET","")}<small>${g.day.split(",")[0]} ET</small>${cd(g,"short")}</div>
-      <div class="mu">${shield(g.away,52)}${g.away}<span class="pp">${f1(implied(g,g.away))}</span><span class="at">at</span>${shield(g.home,52,true)}${g.home}<span class="pp">${f1(implied(g,g.home))}</span></div>
+      <div class="bug"><span class="slab" style="--tc:${TEAMS[g.away].c}">${shield(g.away,44)}<b>${g.away}</b><span class="sc">${f1(implied(g,g.away))}</span></span><span class="at">@</span><span class="slab" style="--tc:${TEAMS[g.home].c}">${shield(g.home,44,true)}<b>${g.home}</b><span class="sc">${f1(implied(g,g.home))}</span></span></div>
       <div class="wxp">${icon(wxIcon(g))}<div>${g.wx.indoor?"Indoors":g.wx.temp==="--"?"Weather":`${g.wx.temp}°, ${g.wx.wind} mph`}<div class="small ${im.lvl}">${im.txt}</div></div></div>
       <div class="thr">Top TD threat<b>${best.name}</b><em>${fmtPct(best.m.prob)}</em></div>
     </div></a>`}).join("");
-  return `<h1 class="${rv()}">Week ${META?META.week:6}</h1>
+  return `<h1 class="${rv()}" data-ghost="Sunday">Week ${META?META.week:6}</h1>
   <p class="lede ${rv()}">Touchdown odds and prop projections for every game, built from pace, game script, matchups, and weather.</p>
   <div class="sample ${rv()}"><i></i>${LIVE?`Live data, updated ${new Date(META.updated).toLocaleString([], {weekday:"short",hour:"numeric",minute:"2-digit"})}. Lines from ${META.oddsSource}.`:"Prototype running on sample data"}</div>
   ${(()=>{const n=nextGame();return n?`<a class="card nextko ${rv()}" href="#/game/${n.id}"><div class="nk-l"><span class="nk-t">Next kickoff</span><span class="nk-m">${shield(n.away,40)}<b>${n.away}</b><span class="at">at</span>${shield(n.home,40,true)}<b>${n.home}</b></span><span class="small">${n.day}, ${n.time}</span></div><div class="cd-clockwrap">${cd(n,"clock")}</div></a>`:""})()}
   <a class="card feature ${rv()}" href="#/game/${m.g.id}">
+    <span class="bignum" aria-hidden="true">${NUM[a.name]??""}</span>
+    <svg class="play" viewBox="0 0 300 200" aria-hidden="true"><defs><marker id="arw" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fff"/></marker></defs>
+      <g fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        ${[110,130,150,170,190].map(x=>`<circle cx="${x}" cy="122" r="7"/>`).join("")}<circle cx="150" cy="150" r="7"/><circle cx="150" cy="176" r="7"/><circle cx="36" cy="122" r="7"/><circle cx="268" cy="122" r="7"/><circle cx="214" cy="124" r="7"/>
+        ${[[70,92],[120,96],[150,92],[180,96],[232,90],[150,58],[60,40],[250,44]].map(([x,y])=>`<path d="M${x-6} ${y-6}L${x+6} ${y+6}M${x+6} ${y-6}L${x-6} ${y+6}"/>`).join("")}
+        <path class="rt" pathLength="1" d="M36 112V58L84 22" marker-end="url(#arw)"/>
+        <path class="rt" pathLength="1" d="M268 112V86L198 52" marker-end="url(#arw)" style="animation-delay:.4s"/>
+        <path class="rt" pathLength="1" d="M214 114V72L262 46" marker-end="url(#arw)" style="animation-delay:.8s"/>
+        <path class="rt" pathLength="1" d="M150 184Q108 186 96 154L84 128" marker-end="url(#arw)" style="animation-delay:1.2s"/>
+        <path d="M14 108H290" stroke-dasharray="4 6" stroke-width="1.4" opacity=".7"/>
+      </g></svg>
+    <span class="glint" aria-hidden="true"></span>
     <span class="badge">${icon("flame").replace('<svg','<svg width="13" height="13"')}Top touchdown play</span>
     <div class="f-main">
       <div class="who">${av(a,true)}<div><div class="f-name">${a.name}</div><div class="f-meta">${a.pos}, ${TEAMS[a.team].n} vs ${TEAMS[m.opp].n}</div></div></div>
@@ -714,7 +814,7 @@ function tdList(){
   return list.length?list.map(tdRow).join(""):emptyMsg();
 }
 function viewTD(){
-  return `<h1 class="${rv()}">Touchdown model</h1>
+  return `<h1 class="${rv()}" data-ghost="Paydirt">Touchdown model</h1>
   <p class="lede ${rv()}">Each player's chance to score at least once. The closer the ball is to the end zone, the likelier the score. Tap any player for the math.</p>
   <div class="filters ${rv()}">${searchBox()}<div class="seg" id="posSeg">${["All","QB","RB","WR","TE"].map(p=>`<button data-pos="${p}" class="${tdState.pos===p?"on":""}">${p==="All"?"All":p}</button>`).join("")}</div></div>
   <div class="list" id="listBox" data-kind="td">${tdList()}</div>`;
@@ -749,7 +849,7 @@ function propList(){
 }
 function viewProps(){
   const stats=["All","Passing yards","Rushing yards","Receptions","Receiving yards"];
-  return `<h1 class="${rv()}">Player props</h1>
+  return `<h1 class="${rv()}" data-ghost="Overs">Player props</h1>
   <p class="lede ${rv()}">Every projection is built step by step: pace, game script, volume, efficiency, then defense, weather, venue, and role. The ring is his chance to go over the sportsbook line, or the line nearest his season average when no book line is posted. Tap a prop to see every step.</p>
   <div class="filters ${rv()}">
     ${searchBox()}
@@ -825,7 +925,7 @@ function snapTable(S){
   </tbody></table></div>`;
 }
 function viewSnaps(){
-  if(LIVE&&!SNAPS) return `<h1 class="${rv()}">Snap counts</h1>
+  if(LIVE&&!SNAPS) return `<h1 class="${rv()}" data-ghost="Usage">Snap counts</h1>
   <div class="card empty ${rv()}" style="margin-top:24px;padding:50px 20px">Snap counts arrive with the next data update. Check back after this morning's refresh.</div>`;
   const S=SNAPS||sampleSnaps();
   const teams=Object.keys(S.teams).sort();
@@ -833,7 +933,7 @@ function viewSnaps(){
   const posList=snapState.side==="O"?["All","QB","RB","WR","TE","OL"]:["All","DL","LB","DB"];
   if(!posList.includes(snapState.pos)) snapState.pos="All";
   const last=S.weeks[S.weeks.length-1];
-  return `<h1 class="${rv()}">Snap counts</h1>
+  return `<h1 class="${rv()}" data-ghost="Usage">Snap counts</h1>
   <p class="lede ${rv()}">Every player's share of his team's snaps, week by week. Rising snap shares are often the first sign of a bigger role, before the stats catch up. Updated through Week ${last}.${S.sample?" Showing sample data.":""}</p>
   <div class="teampick ${rv()}" id="teamPick">${teams.map(t=>`<button data-team="${t}" class="${snapState.team===t?"on":""}" title="${(TEAMS[t]||{}).n||t}">${TEAMS[t]?shield(t,30):""}<span>${t}</span></button>`).join("")}</div>
   <div class="filters ${rv()}">${searchBox()}
@@ -853,7 +953,7 @@ function viewDefense(){
     teams.sort((a,b)=>defSort.key==="name"?dir*v(a).localeCompare(v(b)):dir*(v(a)-v(b))||TEAMS[a].n.localeCompare(TEAMS[b].n));
   }
   const label=defSort.key&&defSort.key!=="name"?` Sorted by ${DEF_COLS.find(c=>c[0]===defSort.key)[1].toLowerCase()}, ${defSort.dir==="best"?"best to worst":"worst to best"}.`:"";
-  return `<h1 class="${rv()}">Defenses</h1>
+  return `<h1 class="${rv()}" data-ghost="Matchups">Defenses</h1>
   <p class="lede ${rv()}">Touchdowns allowed to each position versus league average. Orange is a soft spot to attack, blue a defense to avoid. Yardage ranks run from 1 (stingiest) to 32. Click any column to sort best to worst, and click again for worst to best.<span style="color:var(--accent2)">${label}</span></p>
   <div style="margin-top:24px">${defTable(teams,true)}</div>`;
 }
@@ -885,7 +985,7 @@ function viewGame(id){
 }
 
 function viewMethod(){
-  return `<h1 class="${rv()}">How it works</h1>
+  return `<h1 class="${rv()}" data-ghost="Playbook">How it works</h1>
   <p class="lede ${rv()}">Every number on Paydirt comes from a chain of simple, visible steps. Here's the math behind both models.</p>
   <h2 class="${rv()}">Touchdown model</h2>
   <div class="formula ${rv()}">Expected TDs = team TDs × player share × defense × weather × usage trend</div>
