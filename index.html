@@ -129,6 +129,7 @@ a.card:hover,.lift:hover{border-color:var(--line2);transform:translateY(-2px)}
 .av::after{content:"";position:absolute;left:0;right:0;bottom:6px;height:5px;background:linear-gradient(currentColor 0 1.5px,transparent 1.5px 3.5px,currentColor 3.5px);opacity:.35}
 .av .jn{position:relative;z-index:1;font-family:var(--display);font-weight:900;font-size:21px;line-height:1;margin-top:-4px;letter-spacing:-.5px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .shield{flex:none;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45))}
+.mu .helmet{margin:0 -2px}
 .av.lg{width:64px;height:64px;border-radius:18px}
 .av.lg .jn{font-size:34px;margin-top:-6px}
 .av.lg::after{bottom:9px;height:7px}
@@ -519,10 +520,33 @@ function hexRgb(h){h=h.replace("#","");return [0,2,4].map(i=>parseInt(h.substr(i
 function darken(h,k){return "#"+hexRgb(h).map(v=>Math.round(v*k).toString(16).padStart(2,"0")).join("")}
 function textOn(h){const [r,g,b]=hexRgb(h);return (0.299*r+0.587*g+0.114*b)>165?"#0B1324":"#fff"}
 const av=(x,lg)=>{const c=TEAMS[x.team].c;return `<span class="av ${lg?"lg":""}" style="--tc:${c};--tc2:${darken(c,.45)};--tx:${textOn(c)}" title="${x.name}, #${NUM[x.name]??""}"><span class="jn">${NUM[x.name]??initials(x.name)}</span></span>`};
-function shield(t,size){
-  const c=TEAMS[t].c,d=darken(c,.42),tx=textOn(c),sz=size||34;
-  return `<svg class="shield" width="${sz}" height="${Math.round(sz*1.15)}" viewBox="0 0 40 46" role="img" aria-label="${TEAMS[t].n}"><defs><linearGradient id="sg-${t}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}"/><stop offset="1" stop-color="${d}"/></linearGradient></defs><path d="M20 1.5 L37.5 7.5 V22 C37.5 33.5 30 40.5 20 44.5 C10 40.5 2.5 33.5 2.5 22 V7.5 Z" fill="url(#sg-${t})" stroke="rgba(255,255,255,.55)" stroke-width="1.6"/><path d="M6 11.5 L20 6.8 L34 11.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.4"/><g transform="translate(20 25) rotate(-30)"><ellipse rx="10" ry="6.2" fill="none" stroke="${tx}" stroke-width="2"/><path d="M-4.5 0H4.5M-2.2 -2.2V2.2M0 -2.2V2.2M2.2 -2.2V2.2" stroke="${tx}" stroke-width="1.5" stroke-linecap="round"/></g></svg>`;
+function shield(t,size,flip){
+  const c=TEAMS[t].c,d=darken(c,.42),dd=darken(c,.25),tx=textOn(c),sz=size||48,id=`hg-${t}`;
+  const SH="M17 71C7 62 4 46 8 32C13 15 29 4 48 4C66 4 80 14 84 29L85.5 36L73 38C69 38.6 66.5 41.5 66.5 45.5L66.5 54C66.5 60 70 64 76 66L79 70.5C64 77 35 78.5 17 71Z";
+  const FM="M83 37H95Q97.5 37 97.5 40V61Q97.5 70 90 74L86 75.5Q80 77 77 71.5M68 48.5H97.5M70.5 60H97M87 37V75";
+  return `<svg class="shield helmet" width="${sz}" height="${Math.round(sz*.82)}" viewBox="0 0 100 82" role="img" aria-label="${TEAMS[t].n}"${flip?' style="transform:scaleX(-1)"':""}>
+  <defs>
+    <radialGradient id="${id}" cx=".36" cy=".22" r=".9"><stop offset="0" stop-color="${c}"/><stop offset=".5" stop-color="${c}"/><stop offset="1" stop-color="${d}"/></radialGradient>
+    <clipPath id="hc-${t}"><path d="${SH}"/></clipPath>
+  </defs>
+  <path d="${SH}" fill="url(#${id})" stroke="${dd}" stroke-width="1.6"/>
+  <g clip-path="url(#hc-${t})">
+    <path d="M80 23C70 8 41 3.5 23 13C13 19 8.5 31 8.5 45" fill="none" stroke="${dd}" stroke-width="9" stroke-linecap="round" opacity=".3"/>
+    <path d="M80 23C70 8 41 3.5 23 13C13 19 8.5 31 8.5 45" fill="none" stroke="${tx}" stroke-width="5.2" stroke-linecap="round"/>
+    <ellipse cx="40" cy="19" rx="21" ry="7.5" fill="#fff" opacity=".22" transform="rotate(-12 40 19)"/>
+    <path d="M9 63C24 73 50 74 72 67" fill="none" stroke="#000" stroke-width="6" opacity=".2"/>
+  </g>
+  <circle cx="46" cy="47" r="5.4" fill="${dd}"/>
+  <circle cx="46" cy="47" r="5.4" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/>
+  <path d="M66 69L78 66.5" stroke="#1B2233" stroke-width="4.2" stroke-linecap="round"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="${FM}" stroke="#2E3546" stroke-width="5.6"/>
+    <path d="${FM}" stroke="#E6EBF2" stroke-width="3.2"/>
+  </g>
+  <circle cx="83.5" cy="37" r="2.3" fill="#9AA4B5"/><circle cx="77" cy="70.5" r="2.3" fill="#9AA4B5"/>
+  </svg>`;
 }
+
 const fmtVal=(v,kind)=>kind==="count"?f1(v):Math.round(v);
 function field(prob,lg){
   const pos=Math.min(prob/.6,1)*90;
@@ -565,7 +589,7 @@ function viewSlate(){
     const im=wxImpact(g),best=ALL.find(x=>x.m.g===g);
     return `<a class="card ${rv()}" href="#/game/${g.id}"><div class="gr">
       <div class="time">${g.time.replace(" ET","")}<small>${g.day.split(",")[0]} ET</small></div>
-      <div class="mu">${shield(g.away,30)}${g.away}<span class="pp">${f1(implied(g,g.away))}</span><span class="at">at</span>${shield(g.home,30)}${g.home}<span class="pp">${f1(implied(g,g.home))}</span></div>
+      <div class="mu">${shield(g.away,52)}${g.away}<span class="pp">${f1(implied(g,g.away))}</span><span class="at">at</span>${shield(g.home,52,true)}${g.home}<span class="pp">${f1(implied(g,g.home))}</span></div>
       <div class="wxp">${icon(wxIcon(g))}<div>${g.wx.indoor?"Indoors":g.wx.temp==="--"?"Weather":`${g.wx.temp}°, ${g.wx.wind} mph`}<div class="small ${im.lvl}">${im.txt}</div></div></div>
       <div class="thr">Top TD threat<b>${best.name}</b><em>${fmtPct(best.m.prob)}</em></div>
     </div></a>`}).join("");
@@ -658,7 +682,7 @@ function heatCell(v){
 function defTable(teams){
   return `<div class="card scroll ${rv()}"><table>
   <thead><tr><th>Defense</th><th class="r">vs RB TDs</th><th class="r">vs WR TDs</th><th class="r">vs TE TDs</th><th class="r">QB rush TDs</th><th class="r">Pass yds rank</th><th class="r">Rush yds rank</th><th class="r">Red zone TD%</th></tr></thead>
-  <tbody>${teams.map(t=>{const d=DEF[t];return `<tr><td><span class="tname">${shield(t,24)}${TEAMS[t].n}</span></td>${["rb","wr","te","qb"].map(k=>heatCell(d[k])).join("")}<td class="r num">${d.pr}</td><td class="r num">${d.rr}</td><td class="r num">${d.rz}%</td></tr>`}).join("")}</tbody></table></div>`;
+  <tbody>${teams.map(t=>{const d=DEF[t];return `<tr><td><span class="tname">${shield(t,36)}${TEAMS[t].n}</span></td>${["rb","wr","te","qb"].map(k=>heatCell(d[k])).join("")}<td class="r num">${d.pr}</td><td class="r num">${d.rr}</td><td class="r num">${d.rz}%</td></tr>`}).join("")}</tbody></table></div>`;
 }
 function viewDefense(){
   const teams=Object.keys(DEF).sort((a,b)=>(DEF[b].rb+DEF[b].wr+DEF[b].te)-(DEF[a].rb+DEF[a].wr+DEF[a].te));
@@ -670,7 +694,7 @@ function viewDefense(){
 function viewGame(id){
   const g=GAMES.find(x=>x.id===id); if(!g) return `<div class="empty"><h1>Game not found</h1><p><a href="#/slate">Back to the slate</a></p></div>`;
   const im=wxImpact(g),pa=implied(g,g.away),ph=implied(g,g.home);
-  const side=t=>`<div class="card mini ${rv()}"><div class="mh">${shield(t,26)}<h3>${TEAMS[t].n}</h3></div>${ALL.filter(x=>x.team===t).map(x=>`<div class="mr"><span class="who">${av(x)}<span class="nm">${x.name}<small>${x.pos}</small></span></span>${field(x.m.prob)}<span class="pc ${x.m.prob>=.4?"hot":""}">${fmtPct(x.m.prob)}</span></div>`).join("")}</div>`;
+  const side=t=>`<div class="card mini ${rv()}"><div class="mh">${shield(t,40)}<h3>${TEAMS[t].n}</h3></div>${ALL.filter(x=>x.team===t).map(x=>`<div class="mr"><span class="who">${av(x)}<span class="nm">${x.name}<small>${x.pos}</small></span></span>${field(x.m.prob)}<span class="pc ${x.m.prob>=.4?"hot":""}">${fmtPct(x.m.prob)}</span></div>`).join("")}</div>`;
   const ca=teamCtx(g.away);
   const cond=[["stadium",g.st.name,g.st.city||g.st.roof],["grass",g.st.surface,g.st.roof.split(",")[0].split(" (")[0]],
     ["temp",g.wx.indoor?"72°F":g.wx.temp+"°F","Temperature"],["wind",g.wx.indoor?"0 mph":`${g.wx.wind} mph ${g.wx.dir}`,"Wind"],
@@ -678,9 +702,9 @@ function viewGame(id){
   return `<a class="back" href="#/slate"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>Slate</a>
   <div class="card gh ${rv()}"><div class="wash" style="--ca:${TEAMS[g.away].c};--ch:${TEAMS[g.home].c}"></div>
     <div class="gh-row">
-      <div class="side-t">${shield(g.away,58)}<span class="ab">${g.away}</span><span class="full">${TEAMS[g.away].n}</span><span class="pt">${count(pa,1)}<small>projected</small></span></div>
+      <div class="side-t">${shield(g.away,92)}<span class="ab">${g.away}</span><span class="full">${TEAMS[g.away].n}</span><span class="pt">${count(pa,1)}<small>projected</small></span></div>
       <div class="mid"><span class="k">${g.time}</span><span class="small">${g.day}</span><div class="chips">${g.ml&&g.ml[g.away]?`<span>${g.away} ${fmtOdds(g.ml[g.away].price)}</span><span>${g.home} ${fmtOdds(g.ml[g.home].price)}</span>`:""}<span>${g.home} ${g.spread>0?"+":""}${g.spread}</span><span>O/U ${g.total}</span><span class="${im.lvl}">${im.txt}</span></div></div>
-      <div class="side-t h">${shield(g.home,58)}<span class="ab">${g.home}</span><span class="full">${TEAMS[g.home].n}</span><span class="pt">${count(ph,1)}<small>projected</small></span></div>
+      <div class="side-t h">${shield(g.home,92,true)}<span class="ab">${g.home}</span><span class="full">${TEAMS[g.home].n}</span><span class="pt">${count(ph,1)}<small>projected</small></span></div>
     </div>
   </div>
   <div class="cond">${cond.map(([i,b,s])=>`<div class="card ${rv()}">${icon(i)}<b>${b}</b><span>${s}</span></div>`).join("")}</div>
@@ -776,8 +800,11 @@ let spotRaf=0;document.addEventListener("pointermove",e=>{if(spotRaf)return;spot
 async function loadLive(){
   try{
     const ctl=new AbortController();setTimeout(()=>ctl.abort(),4000);
-    const res=await fetch("data.json",{cache:"no-store",signal:ctl.signal});
-    if(!res.ok) return false;
+    let res=null;
+    for(const url of ["data.json","https://jordygib.github.io/Paydirt/data.json"]){
+      try{res=await fetch(url,{cache:"no-store",signal:ctl.signal});if(res.ok)break;}catch(e){res=null}
+    }
+    if(!res||!res.ok) return false;
     const d=await res.json();
     if(!d||!d.GAMES||!d.GAMES.length||!d.P||!d.P.length) return false;
     META=d.meta;TEAMS=d.TEAMS;OFF=d.OFF;DEF=d.DEF;GAMES=d.GAMES;P=d.P;PROPLINES=d.PROPLINES||{};NUM=Object.assign({},NUM,d.NUM||{});
