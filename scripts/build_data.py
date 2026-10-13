@@ -99,11 +99,55 @@ def load_nflverse(season):
     rosters = pdf(nfl.load_rosters([season]))
     teams = pdf(nfl.load_teams())
     try:
+        depth = pdf(nfl.load_depth_charts([season]))
+    except Exception as e:
+        log("depth charts unavailable:", e)
+        depth = pd.DataFrame()
+    try:
         inj = pdf(nfl.load_injuries([season]))
     except Exception as e:  # injury reports are not always published yet
         log("injuries unavailable:", e)
         inj = pd.DataFrame()
-    return sched, pbp, rosters, teams, inj
+    return sched, pbp, rosters, teams, inj, depth
+
+
+def depth_starting_qbs(depth):
+    """Latest listed QB1 per team from nflverse depth charts. Column names vary by season, so detect them."""
+    if depth is None or depth.empty:
+        return {}
+    cols = set(depth.columns)
+    pos = next((c for c in ["pos_abb", "depth_position", "position"] if c in cols), None)
+    rank = next((c for c in ["pos_rank", "depth_team"] if c in cols), None)
+    when = next((c for c in ["dt", "week"] if c in cols), None)
+    team = "club_code" if "club_code" in cols else "team" if "team" in cols else None
+    if not all([pos, rank, when, team]) or "gsis_id" not in cols:
+        log("depth chart columns not recognized; using recent snaps instead")
+        return {}
+    d = depth[depth[pos].astype(str).str.upper() == "QB"].copy()
+    d["_r"] = pd.to_numeric(d[rank], errors="coerce")
+    out = {}
+    for t, g in d.groupby(team):
+        latest = g[g[when] == g[when].max()]
+        top = latest.sort_values("_r").head(1)
+        if not top.empty and pd.notna(top["gsis_id"].iloc[0]):
+            out[str(t)] = top["gsis_id"].iloc[0]
+    return out
+
+
+def load_overrides():
+    """Optional overrides.json next to index.html: {"exclude": ["Name"], "starting_qb": {"WAS": "Name"}}"""
+    path = os.path.join(os.path.dirname(__file__), "..", "overrides.json")
+    try:
+        with open(path) as f:
+            o = json.load(f)
+        log("using overrides.json")
+        return {"exclude": {norm_name(n) for n in o.get("exclude", [])},
+                "starting_qb": {k: norm_name(v) for k, v in o.get("starting_qb", {}).items()}}
+    except FileNotFoundError:
+        return {"exclude": set(), "starting_qb": {}}
+    except Exception as e:
+        log("overrides.json could not be read:", e)
+        return {"exclude": set(), "starting_qb": {}}
 
 
 # ---------------------------------------------------------------- schedule helpers
@@ -170,7 +214,7 @@ def player_table(use, rosters, rr, tr, season):
     last3 = {}
     for team, g in d.groupby("posteam"):
         gids = g.drop_duplicates("game_id").sort_values(["season", "week"])["game_id"].tail(3).tolist()
-        last3[team] = set(gids)
+        last3[team] = gids
 
     def agg(df, idcol, cols):
         return df.groupby([idcol, "posteam"]).agg(**cols)
@@ -197,6 +241,8 @@ def player_table(use, rosters, rr, tr, season):
         cur_team = str(info.get("team", r["team"]))
         if cur_team != r["team"]:
             continue  # only count production for his current team
+        if str(info.get("status", "ACT")).upper() in {"RES", "CUT", "RET", "RSN", "RSR", "PUP", "NON", "SUS"}:
+            continue  # injured reserve, released, retired, suspended
         games = max(r["rg"], r["tg"], r["pg"], 1)
         team = r["team"]
         opp = r["rush"] + r["tgt"]
@@ -208,7 +254,8 @@ def player_table(use, rosters, rr, tr, season):
         w = min(0.85, 0.55 + games * 0.03)
         share = w * share + (1 - w) * base
         # usage trend: last 3 games' share of team carries + targets vs the full sample
-        g3 = last3.get(team, set())
+        g3 = last3.get(team, [])
+        latest = g3[-1] if g3 else None
         p3 = rush[(rush["rusher_player_id"] == r["id"]) & rush["game_id"].isin(g3)].shape[0] + \
             tgt[(tgt["receiver_player_id"] == r["id"]) & tgt["game_id"].isin(g3)].shape[0]
         t3 = rush[(rush["posteam"] == team) & rush["game_id"].isin(g3)].shape[0] + \
@@ -224,22 +271,34 @@ def player_table(use, rosters, rr, tr, season):
             rush=r1(r["rush"] / games), rushYd=r1(r["rushYd"] / games), td=int(r["rtd"] + r["ctd"]),
             trend=int(trend), passYd=r1(r["passYd"] / games) if pos == "QB" else 0, att=r["att"] / games,
             num=None if pd.isna(num) else int(num),
+            use3=int(p3),
+            att_last=int(passes[(passes["passer_player_id"] == r["id"]) & (passes["game_id"] == latest)].shape[0]) if latest else 0,
+            att3=int(passes[(passes["passer_player_id"] == r["id"]) & passes["game_id"].isin(g3)].shape[0]),
         ))
     return pd.DataFrame(rows)
 
 
-def pick_players(pt, teams_playing, injuries):
+def pick_players(pt, teams_playing, injuries, depth_qbs, overrides):
+    """Pick each team's current starters: QB from depth chart or the latest game, others by last-3-game usage."""
     out = []
+    pt = pt.assign(_n=pt["name"].map(norm_name))
     for team in teams_playing:
-        t = pt[pt["team"] == team]
+        t = pt[(pt["team"] == team) & ~pt["id"].isin(injuries.get("out", set())) & ~pt["_n"].isin(overrides["exclude"])]
         if t.empty:
             continue
-        t = t[~t["id"].isin(injuries.get("out", set()))]
-        qb = t[t["pos"] == "QB"].sort_values("att", ascending=False).head(1)
-        rb = t[t["pos"] == "RB"].assign(k=lambda x: x["rush"] + x["tgt"]).sort_values("k", ascending=False).head(2)
-        wr = t[t["pos"] == "WR"].sort_values("tgt", ascending=False).head(3)
-        te = t[t["pos"] == "TE"].sort_values("tgt", ascending=False).head(1)
-        out.append(pd.concat([qb, rb, wr, te]))
+        qbs = t[t["pos"] == "QB"]
+        forced = overrides["starting_qb"].get(team)
+        if forced and (qbs["_n"] == forced).any():
+            qb = qbs[qbs["_n"] == forced].head(1)
+        elif depth_qbs.get(team) in set(qbs["id"]):
+            qb = qbs[qbs["id"] == depth_qbs[team]].head(1)
+        else:
+            qb = qbs.sort_values(["att_last", "att3", "att"], ascending=False).head(1)
+        rb = t[t["pos"] == "RB"].sort_values(["use3", "rush"], ascending=False).head(2)
+        wr = t[t["pos"] == "WR"].sort_values(["use3", "tgt"], ascending=False).head(3)
+        te = t[t["pos"] == "TE"].sort_values(["use3", "tgt"], ascending=False).head(1)
+        picked = pd.concat([qb, rb, wr, te])
+        out.append(picked[picked["use3"] + picked["att3"] > 0])  # drop anyone with no role in the last 3 games
     return pd.concat(out) if out else pt.iloc[0:0]
 
 
@@ -479,7 +538,9 @@ def main():
     now = datetime.now(timezone.utc)
     season = int(os.environ.get("SEASON") or (now.year if now.month >= 8 else now.year - 1))
     log("season", season)
-    sched, pbp, rosters, teams_df, inj = load_nflverse(season)
+    sched, pbp, rosters, teams_df, inj, depth = load_nflverse(season)
+    depth_qbs = depth_starting_qbs(depth)
+    overrides = load_overrides()
     week, games = upcoming_week(sched, season)
     if week is None:
         log("no upcoming regular-season games; leaving data.json unchanged")
@@ -549,7 +610,7 @@ def main():
         ))
         teams_playing += [a, h]
 
-    picked = pick_players(pt, teams_playing, injuries)
+    picked = pick_players(pt, teams_playing, injuries, depth_qbs, overrides)
     players, nums = [], {}
     for _, r in picked.iterrows():
         p = {k: r[k] for k in ["name", "team", "pos", "share", "snap", "tgt", "rec", "recYd", "rush", "rushYd", "td",
