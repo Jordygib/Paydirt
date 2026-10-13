@@ -430,6 +430,44 @@ nav.main a.on::after{display:none}
 .side-t .ab{font-weight:900}
 .gh .wash{opacity:1}
 .gh::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:repeating-linear-gradient(115deg,rgba(255,255,255,.025) 0 2px,transparent 2px 14px)}
+
+/* picks of the week + record */
+.picks{display:block;margin-top:16px;padding:18px 22px;text-decoration:none;background:linear-gradient(100deg,rgba(255,106,43,.12),transparent 50%),var(--surface)}
+.picks-h{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.recs{margin-left:auto;display:flex;gap:16px;font-size:14px;color:var(--muted)}
+.recs b{font-family:var(--display);font-style:italic;font-size:18px;color:var(--ink)}
+.recs i{font-style:italic;font-family:var(--display);font-weight:800}
+.up{color:var(--turf)}.down{color:#FF5A5A}
+.bets{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
+.bet{background:rgba(255,255,255,.03);border:1px solid var(--line);padding:12px 14px;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%)}
+.bet-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.bet-t{font-family:var(--display);font-style:italic;font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:.3px}
+.bet.par .bet-t{color:var(--accent2)}
+.bet-o{font-family:var(--display);font-style:italic;font-weight:900;font-size:28px;color:var(--accent);text-shadow:0 0 18px var(--glow)}
+.legs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.legs li{display:flex;align-items:center;gap:10px;font-size:15px}
+.legs .lt{flex:1;min-width:0}
+.legs .lt em{font-style:normal;font-weight:700;color:var(--accent2)}
+.legs .lt small{display:block;font-size:12px;color:var(--muted)}
+.legs .lo{font-family:var(--display);font-style:italic;font-weight:700;color:var(--muted)}
+.lg{flex:none;width:22px;height:22px;display:grid;place-items:center;font-size:12px;font-weight:900;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.lg.win{background:var(--turf);color:#04210F}.lg.loss{background:#FF5A5A;color:#2A0505}.lg.push{background:var(--raise);color:var(--muted)}.lg.pend{background:var(--raise);color:var(--accent2);animation:pulse 1.6s ease-in-out infinite}
+.bet-f{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.rtag{font-family:var(--display);font-style:italic;font-weight:900;font-size:15px;text-transform:uppercase;padding:3px 12px;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.rtag.win{background:var(--turf);color:#04210F}.rtag.loss{background:#FF5A5A;color:#2A0505}.rtag.pend,.rtag.push{background:var(--raise);color:var(--muted)}
+.lock{font-size:12px;color:var(--muted);margin-left:6px}
+.rtiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:24px}
+.rt{padding:16px 18px}
+.rt b{display:block;font-family:var(--display);font-style:italic;font-weight:900;font-size:36px;line-height:1}
+.rt span{font-size:13px;color:var(--muted)}
+.uchart{width:100%;height:auto;display:block}
+.uline{stroke-dasharray:1;stroke-dashoffset:1;animation:drawu 1.4s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes drawu{to{stroke-dashoffset:0}}
+.wlist{display:flex;flex-direction:column;gap:12px}
+.wk{padding:14px 18px}
+.wk-h{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.wk-h b{font-family:var(--display);font-style:italic;font-weight:900;font-size:22px;text-transform:uppercase}
+@media (max-width:760px){.bets{grid-template-columns:1fr}.recs{margin-left:0;width:100%}}
 </style>
 </head>
 <body>
@@ -446,6 +484,7 @@ nav.main a.on::after{display:none}
       <a href="#/td" data-r="td">TD model</a>
       <a href="#/props" data-r="props">Props</a>
       <a href="#/snaps" data-r="snaps">Snap counts</a>
+      <a href="#/record" data-r="record">My record</a>
       <a href="#/defense" data-r="defense">Defenses</a>
       <a href="#/method" data-r="method">How it works</a>
     </nav>
@@ -455,7 +494,7 @@ nav.main a.on::after{display:none}
 <main id="app"></main>
 <script>
 // ---------- Sample data ----------
-let META=null,PROPLINES={},LIVE=false,SNAPS=null;
+let META=null,PROPLINES={},LIVE=false,SNAPS=null,PICKS=null;
 let TEAMS={
  BUF:{n:"Buffalo Bills",c:"#2F6BFF"},KC:{n:"Kansas City Chiefs",c:"#E31837"},DET:{n:"Detroit Lions",c:"#0076B6"},
  GB:{n:"Green Bay Packers",c:"#FFB612"},PHI:{n:"Philadelphia Eagles",c:"#1FA39B"},DAL:{n:"Dallas Cowboys",c:"#869397"},
@@ -757,6 +796,7 @@ function viewSlate(){
   <p class="lede ${rv()}">Touchdown odds and prop projections for every game, built from pace, game script, matchups, and weather.</p>
   <div class="sample ${rv()}"><i></i>${LIVE?`Live data, updated ${new Date(META.updated).toLocaleString([], {weekday:"short",hour:"numeric",minute:"2-digit"})}. Lines from ${META.oddsSource}.`:"Prototype running on sample data"}</div>
   ${(()=>{const n=nextGame();return n?`<a class="card nextko ${rv()}" href="#/game/${n.id}"><div class="nk-l"><span class="nk-t">Next kickoff</span><span class="nk-m">${shield(n.away,40)}<b>${n.away}</b><span class="at">at</span>${shield(n.home,40,true)}<b>${n.home}</b></span><span class="small">${n.day}, ${n.time}</span></div><div class="cd-clockwrap">${cd(n,"clock")}</div></a>`:""})()}
+  ${picksCard()}
   <a class="card feature ${rv()}" href="#/game/${m.g.id}">
     <span class="bignum" aria-hidden="true">${NUM[a.name]??""}</span>
     <svg class="play" viewBox="0 0 300 200" aria-hidden="true"><defs><marker id="arw" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fff"/></marker></defs>
@@ -883,6 +923,94 @@ function defTable(teams,sortable){
   <thead><tr>${head}</tr></thead>
   <tbody>${teams.map(t=>{const d=DEF[t];return `<tr><td><span class="tname">${shield(t,36)}${TEAMS[t].n}</span></td>${["rb","wr","te","qb"].map(k=>heatCell(d[k])).join("")}<td class="r num">${d.pr}</td><td class="r num">${d.rr}</td><td class="r num">${d.rz}%</td></tr>`}).join("")}</tbody></table></div>`;
 }
+
+// ---------- Picks of the week + record ----------
+function samplePicks(){
+  const L=(player,market,side,line,odds,status,detail)=>({player,market,side,line,odds,status,detail});
+  const T=(team,market,side,line,odds,status,detail)=>({team,market,side,line,odds,status,detail});
+  const wk=(week,parlay,prop)=>({season:2026,week,parlay,prop});
+  const B=(odds,result,legs)=>({odds,units:1,result,profit:result==="win"?+(odds>0?odds/100:100/-odds).toFixed(2):result==="loss"?-1:0,legs,locked:result!=="pending"});
+  const weeks=[
+    wk(6,B(285,"pending",[L("Derrick Henry","Rushing yards","over",79.5,-260,"pending",""),L("Ja'Marr Chase","Receptions","over",4.5,-230,"pending",""),T("PHI","Spread",null,6.5,-280,"pending","")]),B(-115,"pending",[L("George Kittle","Receiving yards","over",54.5,-115,"pending","")])),
+    wk(5,B(240,"win",[L("Saquon Barkley","Anytime TD",null,null,-160,"win","1 TD"),L("CeeDee Lamb","Receptions","over",4.5,-250,"win","8 catches"),T("BUF","Moneyline",null,null,-220,"win","27-20")]),B(-110,"loss",[L("Jared Goff","Passing yards","over",254.5,-110,"loss","231 yds")])),
+    wk(4,B(310,"loss",[L("Jahmyr Gibbs","Rush + rec yards","over",79.5,-240,"win","104 yds"),L("Travis Kelce","Receptions","over",3.5,-250,"loss","3 catches"),T("KC","Total","over",40.5,-260,"win","51 total points")]),B(-120,"win",[L("Josh Jacobs","Rushing yards","over",69.5,-120,"win","88 yds")])),
+    wk(3,B(195,"win",[L("Derrick Henry","Anytime TD",null,null,-190,"win","2 TD"),L("Amon-Ra St. Brown","Receiving yards","over",49.5,-270,"win","76 yds"),T("DET","Moneyline",null,null,-260,"win","31-24")]),B(-105,"win",[L("Ja'Marr Chase","Receiving yards","over",79.5,-105,"win","112 yds")])),
+    wk(2,B(330,"loss",[L("Christian McCaffrey","Anytime TD",null,null,-170,"loss","0 TD"),L("A.J. Brown","Receptions","over",3.5,-280,"win","6 catches"),T("SEA","Spread",null,7.5,-250,"win","17-20")]),B(-110,"win",[L("Lamar Jackson","Rushing yards","over",44.5,-110,"win","63 yds")])),
+    wk(1,B(260,"win",[L("Josh Allen","Passing yards","over",199.5,-300,"win","262 yds"),L("Jaylen Waddle","Receptions","over",3.5,-240,"win","5 catches"),T("CIN","Total","over",41.5,-270,"win","47 total points")]),B(-115,"loss",[L("De'Von Achane","Receptions","over",4.5,-115,"loss","3 catches")]))];
+  const sum=k=>{const b=weeks.map(w=>w[k]).filter(x=>x.result!=="pending");const u=b.reduce((a,x)=>a+x.profit,0);return {w:b.filter(x=>x.result==="win").length,l:b.filter(x=>x.result==="loss").length,p:0,units:+u.toFixed(2),roi:+(100*u/b.length).toFixed(1)}};
+  const legs=weeks.flatMap(w=>w.parlay.legs).filter(l=>l.status==="win"||l.status==="loss");
+  return {weeks,record:{parlay:sum("parlay"),prop:sum("prop"),legs:{hit:legs.filter(l=>l.status==="win").length,total:legs.length}},sample:true};
+}
+function picksData(){return PICKS&&PICKS.weeks&&PICKS.weeks.length?PICKS:(LIVE?null:samplePicks())}
+const MKT_UNIT={"rushing yards":"rush yds","receiving yards":"rec yds","passing yards":"pass yds","receptions":"catches","rush + rec yards":"rush + rec yds","rushing + receiving yards":"rush + rec yds","passing tds":"pass TDs","passing touchdowns":"pass TDs"};
+function legText(l){
+  const m=String(l.market||"").toLowerCase(), who=esc(l.player||l.team||"");
+  if(m.includes("anytime")) return `${who} <em>anytime TD</em>`;
+  if(m==="moneyline") return `${who} <em>moneyline</em>`;
+  if(m==="spread") return `${who} <em>${l.line>0?"+":""}${l.line}</em>`;
+  if(m.includes("total")) return `${who} game <em>${(l.side||"over").toLowerCase()} ${l.line}</em> pts`;
+  return `${who} <em>${(l.side||"over").toLowerCase()} ${l.line}</em> ${MKT_UNIT[m]||esc(l.market)}`;
+}
+const STAT_ICON={win:'<span class="lg win">✓</span>',loss:'<span class="lg loss">✕</span>',push:'<span class="lg push">P</span>',void:'<span class="lg push">V</span>',pending:'<span class="lg pend">●</span>',unknown:'<span class="lg push">?</span>',review:'<span class="lg push">?</span>'};
+function resultTag(b){
+  if(b.result==="pending") return `<span class="rtag pend">${b.kick&&Date.parse(b.kick)<Date.now()?"In play":"Pending"}</span>`;
+  if(b.result==="win") return `<span class="rtag win">Hit +${b.profit.toFixed(2)}u</span>`;
+  if(b.result==="loss") return `<span class="rtag loss">Miss ${b.profit.toFixed(2)}u</span>`;
+  return `<span class="rtag push">${b.result==="push"?"Push":"Under review"}</span>`;
+}
+function betBlock(b,title,cls){
+  return `<div class="bet ${cls}"><div class="bet-h"><span class="bet-t">${title}</span><span class="bet-o">${fmtOdds(+b.odds)}</span></div>
+    <ul class="legs">${b.legs.map(l=>`<li>${STAT_ICON[l.status]||STAT_ICON.pending}<span class="lt">${legText(l)}${l.detail?`<small>${esc(l.detail)}</small>`:""}</span>${l.odds!=null&&b.legs.length>1?`<span class="lo">${fmtOdds(+l.odds)}</span>`:""}</li>`).join("")}</ul>
+    <div class="bet-f">${resultTag(b)}<span class="small">${b.units}u${b.locked?' <span class="lock">🔒 Locked</span>':""}</span></div></div>`;
+}
+const recLine=r=>`${r.w}-${r.l}${r.p?`-${r.p}`:""}`;
+const unitsTxt=u=>`${u>=0?"+":""}${u.toFixed(2)}u`;
+function picksCard(){
+  const D=picksData();
+  if(!D) return `<div class="card picks ${rv()}"><div class="picks-h"><span class="nk-t">Picks of the week</span></div><p class="small" style="margin:8px 0 0">This week's parlay and prop drop before Sunday. Check back soon.</p></div>`;
+  const w=D.weeks[0], R=D.record;
+  return `<a class="card picks ${rv()}" href="#/record">
+    <div class="picks-h"><span class="nk-t">Picks of the week${D.sample?" (sample)":""}</span><span class="small">Week ${w.week}</span>
+      <span class="recs"><span>Parlays <b>${recLine(R.parlay)}</b> <i class="${R.parlay.units>=0?"up":"down"}">${unitsTxt(R.parlay.units)}</i></span><span>Props <b>${recLine(R.prop)}</b> <i class="${R.prop.units>=0?"up":"down"}">${unitsTxt(R.prop.units)}</i></span></span></div>
+    <div class="bets">${w.parlay?betBlock(w.parlay,"Parlay of the week","par"):""}${w.prop?betBlock(w.prop,"Prop of the week","pro"):""}</div>
+  </a>`;
+}
+function unitsChart(weeks){
+  const pts=[...weeks].reverse().filter(w=>(w.parlay&&w.parlay.result!=="pending")||(w.prop&&w.prop.result!=="pending"));
+  if(pts.length<2) return "";
+  let cum=0;const vals=[0,...pts.map(w=>cum+=((w.parlay&&w.parlay.profit)||0)+((w.prop&&w.prop.profit)||0))];
+  const W=640,H=180,pad=28,mx=Math.max(1,...vals.map(Math.abs));
+  const x=i=>pad+i*(W-2*pad)/(vals.length-1),y=v=>H/2-v*(H/2-pad)/mx;
+  const path=vals.map((v,i)=>`${i?"L":"M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join("");
+  return `<svg class="uchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Units over time">
+    <line x1="${pad}" x2="${W-pad}" y1="${y(0)}" y2="${y(0)}" stroke="rgba(255,255,255,.15)" stroke-dasharray="4 5"/>
+    <path d="${path} L${x(vals.length-1)} ${y(0)} L${x(0)} ${y(0)}Z" fill="url(#ug)" opacity=".35"/>
+    <defs><linearGradient id="ug" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF6A2B"/><stop offset="1" stop-color="#FF6A2B" stop-opacity="0"/></linearGradient></defs>
+    <path class="uline" d="${path}" fill="none" stroke="#FF8A3D" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/>
+    ${vals.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="#05080F" stroke="#FF8A3D" stroke-width="2"/>`).join("")}
+    ${["Start",...pts.map(w=>"Wk "+w.week)].map((t,i)=>`<text x="${x(i)}" y="${H-6}" text-anchor="middle" font-size="11" fill="#94A1B9">${t}</text>`).join("")}
+    <text x="${x(vals.length-1)}" y="${y(vals[vals.length-1])-12}" text-anchor="end" font-size="14" font-weight="800" fill="#FF8A3D">${unitsTxt(vals[vals.length-1])}</text></svg>`;
+}
+function viewRecord(){
+  const D=picksData();
+  if(!D) return `<h1 class="${rv()}" data-ghost="Receipts">My record</h1><div class="card empty ${rv()}" style="margin-top:24px">The first picks of the week are on the way. Every parlay and prop will be graded here automatically.</div>`;
+  const R=D.record, tot=R.parlay.units+R.prop.units, n=R.parlay.w+R.parlay.l+R.prop.w+R.prop.l;
+  const tile=(b,l,c)=>`<div class="card rt ${rv()}"><b class="${c||""}">${b}</b><span>${l}</span></div>`;
+  return `<h1 class="${rv()}" data-ghost="Receipts">My record</h1>
+  <p class="lede ${rv()}">Every parlay and prop of the week, graded automatically from official stats. Picks lock at kickoff and can't be edited after. Wins and losses both stay on the record.${D.sample?" Showing sample picks.":""}</p>
+  <div class="rtiles">
+    ${tile(unitsTxt(tot),"Total units",tot>=0?"up":"down")}
+    ${tile(recLine(R.parlay),`Parlays, ${unitsTxt(R.parlay.units)}`)}
+    ${tile(recLine(R.prop),`Props, ${unitsTxt(R.prop.units)}`)}
+    ${tile(`${R.legs.total?Math.round(100*R.legs.hit/R.legs.total):0}%`,`Parlay legs hit (${R.legs.hit} of ${R.legs.total})`)}
+    ${tile(`${n?((tot/n)*100).toFixed(1):"0.0"}%`,"ROI on every unit risked",tot>=0?"up":"down")}
+  </div>
+  <div class="card ${rv()}" style="padding:16px 18px;margin-top:14px"><div class="nk-t" style="margin-bottom:4px">Units over time</div>${unitsChart(D.weeks)||'<p class="small">The chart appears after two graded weeks.</p>'}</div>
+  <h2 class="${rv()}">Week by week</h2>
+  <div class="wlist">${D.weeks.map(w=>`<div class="card wk ${rv()}"><div class="wk-h"><b>Week ${w.week}</b>${w.posted?`<span class="small">Posted ${new Date(w.posted).toLocaleString([], {weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span>`:""}</div><div class="bets">${w.parlay?betBlock(w.parlay,"Parlay","par"):""}${w.prop?betBlock(w.prop,"Prop","pro"):""}</div></div>`).join("")}</div>
+  <p class="small" style="margin-top:14px">1 unit risked per pick unless noted. Parlay odds are the price posted at the sportsbook when the pick was made. For entertainment and information only; 21+. If gambling stops being fun, call 1-800-GAMBLER.</p>`;
+}
+
 // ---------- Snap counts ----------
 function sampleSnaps(){
   // demo data built from the sample players so the prototype shows the layout
@@ -1059,7 +1187,7 @@ function render(){
   rvI=0;
   const h=location.hash.replace(/^#\/?/,"")||"slate";
   const [r,arg]=h.split("/");
-  const views={slate:viewSlate,td:viewTD,props:viewProps,defense:viewDefense,method:viewMethod,snaps:viewSnaps,game:()=>viewGame(arg)};
+  const views={slate:viewSlate,td:viewTD,props:viewProps,defense:viewDefense,method:viewMethod,snaps:viewSnaps,record:viewRecord,game:()=>viewGame(arg)};
   document.getElementById("app").innerHTML=(views[r]||viewSlate)();
   document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("on",a.dataset.r===r||(r==="game"&&a.dataset.r==="slate")||(!views[r]&&a.dataset.r==="slate")));
   animateCounts();animateRings();bind();tickCountdowns();
@@ -1094,7 +1222,7 @@ async function loadLive(){
     if(!res||!res.ok) return false;
     const d=await res.json();
     if(!d||!d.GAMES||!d.GAMES.length||!d.P||!d.P.length) return false;
-    META=d.meta;TEAMS=d.TEAMS;OFF=d.OFF;DEF=d.DEF;GAMES=d.GAMES;P=d.P;PROPLINES=d.PROPLINES||{};SNAPS=d.SNAPS||null;NUM=Object.assign({},NUM,d.NUM||{});
+    META=d.meta;TEAMS=d.TEAMS;OFF=d.OFF;DEF=d.DEF;GAMES=d.GAMES;P=d.P;PROPLINES=d.PROPLINES||{};SNAPS=d.SNAPS||null;PICKS=d.PICKS||null;NUM=Object.assign({},NUM,d.NUM||{});
     P=P.filter(p=>TEAMS[p.team]&&OFF[p.team]&&gameOf(p.team));
     return true;
   }catch(e){return false}
