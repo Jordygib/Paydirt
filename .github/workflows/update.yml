@@ -1,0 +1,62 @@
+name: Update data and publish site
+
+on:
+  schedule:
+    - cron: "0 14 * * *"     # every day at 10:00 AM Eastern (14:00 UTC)
+  workflow_dispatch:          # adds a "Run workflow" button on the Actions tab
+    inputs:
+      force_props:
+        description: "Pull player props now (uses about 5 free credits per game)"
+        type: boolean
+        default: false
+  push:
+    branches: [main]          # republish whenever you edit the site
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: paydirt
+  cancel-in-progress: false
+
+jobs:
+  build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install packages
+        run: pip install nflreadpy pandas polars pyarrow requests
+
+      - name: Build data.json
+        continue-on-error: true   # if a source is down, still publish the site with the last good data
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          FORCE_PROPS: ${{ github.event.inputs.force_props == 'true' && '1' || '0' }}
+        run: python scripts/build_data.py
+
+      - name: Save data.json to the repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data.json || true
+          git diff --staged --quiet || (git commit -m "Update data" && git push)
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
+      
