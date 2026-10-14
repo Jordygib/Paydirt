@@ -97,6 +97,11 @@ def load_nflverse(season):
     sched = pdf(nfl.load_schedules(seasons))
     pbp = pdf(nfl.load_pbp(seasons))
     rosters = pdf(nfl.load_rosters([season]))
+    try:  # positions for last season's players too, for the backtest
+        rosters_all = pdf(nfl.load_rosters(seasons))
+    except Exception as e:
+        log("prior-season rosters unavailable:", e)
+        rosters_all = rosters
     teams = pdf(nfl.load_teams())
     try:
         depth = pdf(nfl.load_depth_charts([season]))
@@ -113,7 +118,7 @@ def load_nflverse(season):
     except Exception as e:  # injury reports are not always published yet
         log("injuries unavailable:", e)
         inj = pd.DataFrame()
-    return sched, pbp, rosters, teams, inj, depth, snaps
+    return sched, pbp, rosters, teams, inj, depth, snaps, rosters_all
 
 
 SNAP_TEAM_FIX = {"GNB": "GB", "KAN": "KC", "NWE": "NE", "NOR": "NO", "SFO": "SF", "TAM": "TB", "LVR": "LV", "LAR": "LA",
@@ -883,12 +888,191 @@ def grade_picks(picks, prev, sched, pbp, rosters, snaps, season, now):
             "legs": {"hit": sum(l["status"] == "win" for l in legs_all), "total": len(legs_all)}}}
 
 
+
+# ---------------------------------------------------------------- backtest + self-correcting calibration
+POS_BASE = {"QB": 0.05, "RB": 0.20, "WR": 0.12, "TE": 0.09}
+CAL_FEATURES = ["const", "log_lam", "RB", "WR", "TE", "log_tgt", "log_rush"]
+
+
+def backtest_rows(pbp, sched, rosters_all, rr, tr, min_week=4):
+    """Re-run the TD model on every past week using only games played before it, and record who scored.
+    Returns one row per player-game: the raw model inputs/output plus whether he actually scored."""
+    d = pbp[(pbp["season_type"] == "REG") & pbp["posteam"].notna()].copy()
+    if d.empty:
+        return pd.DataFrame()
+    d["b"] = d["yardline_100"].map(bucket)
+    pos_of = rosters_all.drop_duplicates("gsis_id", keep="last").set_index("gsis_id")["position"].to_dict()
+    rush = d[(d["rush_attempt"] == 1) & d["rusher_player_id"].notna()]
+    tgt = d[(d["pass_attempt"] == 1) & d["receiver_player_id"].notna()]
+    o = pd.concat([
+        pd.DataFrame({"season": rush["season"], "week": rush["week"], "team": rush["posteam"], "opp": rush["defteam"],
+                      "pid": rush["rusher_player_id"], "xtd": rush["b"].map(rr).fillna(0), "td": rush["rush_touchdown"],
+                      "r": 1, "t": 0}),
+        pd.DataFrame({"season": tgt["season"], "week": tgt["week"], "team": tgt["posteam"], "opp": tgt["defteam"],
+                      "pid": tgt["receiver_player_id"], "xtd": tgt["b"].map(tr).fillna(0), "td": tgt["pass_touchdown"],
+                      "r": 0, "t": 1}),
+    ], ignore_index=True)
+    o["pos"] = o["pid"].map(pos_of)
+    o = o[o["pos"].isin(["QB", "RB", "WR", "TE"])]
+    pw = o.groupby(["season", "pid", "team", "week"]).agg(xtd=("xtd", "sum"), td=("td", "sum"), r=("r", "sum"),
+                                                         t=("t", "sum")).reset_index()
+    tw = o.groupby(["season", "team", "week"]).agg(txtd=("xtd", "sum"), ttd=("td", "sum"), topp=("r", "size")).reset_index()
+    # touchdowns allowed by each defense to each position, per week
+    tdp = o[o["td"] == 1].copy()
+    tdp["k"] = tdp.apply(lambda x: "qb" if x["pos"] == "QB" else x["pos"].lower(), axis=1)
+    dallow = tdp.groupby(["season", "opp", "week", "k"]).size().unstack("k", fill_value=0).reset_index()
+    dgames = o.groupby(["season", "opp", "week"]).size().reset_index()[["season", "opp", "week"]]
+    # who scored (any touchdown) in each week
+    if "td_player_id" in d.columns:
+        sc = d[d["td_player_id"].notna()].groupby(["season", "week", "td_player_id"]).size()
+        scored = {(s_, w_, p_) for (s_, w_, p_) in sc.index}
+    else:
+        scored = {(s_, w_, p_) for s_, w_, p_ in o[o["td"] == 1][["season", "week", "pid"]].itertuples(index=False)}
+    sch = sched[sched["game_type"] == "REG"]
+    rows = []
+    for season in sorted(o["season"].unique()):
+        po, tws, das = pw[pw["season"] == season], tw[tw["season"] == season], dallow[dallow["season"] == season]
+        dgs = dgames[dgames["season"] == season]
+        ssch = sch[sch["season"] == season]
+        for w in sorted(po["week"].unique()):
+            if w < min_week:
+                continue
+            prior, now = po[po["week"] < w], po[po["week"] == w]
+            if prior.empty or now.empty:
+                continue
+            cum = prior.groupby(["pid", "team"]).agg(xtd=("xtd", "sum"), td=("td", "sum"), r=("r", "sum"), t=("t", "sum"),
+                                                     games=("week", "nunique")).reset_index()
+            tcum = tws[tws["week"] < w].groupby("team").agg(txtd=("txtd", "sum"), ttd=("ttd", "sum"), topp=("topp", "sum"))
+            # defense multipliers, shrunk toward league average (10 games of prior)
+            dc = das[das["week"] < w].groupby("opp").sum(numeric_only=True)
+            dg = dgs[dgs["week"] < w].groupby("opp").size()
+            lg = {k: (dc[k].sum() / max(dg.sum(), 1)) if k in dc.columns else 0 for k in ["rb", "wr", "te", "qb"]}
+            # last three team weeks for the usage trend
+            last3 = {t_: sorted(g["week"][g["week"] < w])[-3:] for t_, g in tws.groupby("team")}
+            # game context for week w
+            gw = ssch[ssch["week"] == w]
+            ctx = {}
+            for _, g in gw.iterrows():
+                if pd.isna(g.get("spread_line")) or pd.isna(g.get("total_line")):
+                    continue
+                hs = g["total_line"] / 2 + g["spread_line"] / 2  # spread_line > 0 means home favored
+                roof = str(g.get("roof") or "")
+                wind = 0 if roof in ("dome", "closed") or pd.isna(g.get("wind")) else float(g["wind"])
+                ctx[g["home_team"]] = (hs, g["away_team"], wind)
+                ctx[g["away_team"]] = (g["total_line"] - hs, g["home_team"], wind)
+            now_ids = set(zip(now["pid"], now["team"]))
+            for c in cum.itertuples(index=False):
+                if (c.pid, c.team) not in now_ids or c.team not in ctx or c.team not in tcum.index:
+                    continue
+                pos = pos_of.get(c.pid)
+                tc = tcum.loc[c.team]
+                sx = c.xtd / max(tc["txtd"], 1e-6)
+                sa = c.td / max(tc["ttd"], 1)
+                share = 0.75 * sx + 0.25 * sa
+                wsh = min(0.85, 0.55 + c.games * 0.03)
+                share = wsh * share + (1 - wsh) * POS_BASE[pos]
+                if share < 0.03 or c.games < 2:
+                    continue
+                pts, opp, wind = ctx[c.team]
+                k = "qb" if pos == "QB" else pos.lower()
+                g_ = dg.get(opp, 0)
+                per = (dc.loc[opp, k] if (opp in dc.index and k in dc.columns) else 0) / max(g_, 1)
+                mult = (per * g_ + lg[k] * 10) / ((g_ + 10) * lg[k]) if lg[k] > 0 else 1.0
+                dadj = 1 + (mult - 1) * 0.7
+                kind = "pass" if pos in ("WR", "TE") else "rush"
+                wx = 1.0
+                if wind >= 20:
+                    wx = 0.88 if kind == "pass" else 1.05
+                elif wind >= 15:
+                    wx = 0.92 if kind == "pass" else 1.03
+                l3 = last3.get(c.team, [])
+                pp3 = prior[(prior["pid"] == c.pid) & prior["week"].isin(l3)][["r", "t"]].sum().sum()
+                tt3 = tws[(tws["team"] == c.team) & tws["week"].isin(l3)]["topp"].sum()
+                sh_all = (c.r + c.t) / max(tc["topp"], 1)
+                trend = 0 if sh_all <= 0 else max(-2, min(2, round(((pp3 / max(tt3, 1)) / sh_all - 1) / 0.1)))
+                lam = pts * TD_PER_POINT * share * dadj * wx * (1 + trend * 0.04)
+                rows.append(dict(season=int(season), week=int(w), pos=pos, lam=lam, tgt=c.t / c.games, rush=c.r / c.games,
+                                 y=int((season, w, c.pid) in scored)))
+    return pd.DataFrame(rows)
+
+
+TD_PER_POINT = 0.105
+
+
+def cal_matrix(df):
+    import numpy as np
+    return np.column_stack([np.ones(len(df)), np.log(np.maximum(df["lam"].values, 1e-4)),
+                            (df["pos"] == "RB").values, (df["pos"] == "WR").values, (df["pos"] == "TE").values,
+                            np.log1p(df["tgt"].values), np.log1p(df["rush"].values)]).astype(float)
+
+
+def fit_logistic(X, y, ridge=1.0, iters=50):
+    """Logistic regression by Newton's method with a light ridge penalty (no extra packages needed)."""
+    import numpy as np
+    b = np.zeros(X.shape[1])
+    pen = np.eye(X.shape[1]) * ridge
+    pen[0, 0] = 0
+    for _ in range(iters):
+        p = 1 / (1 + np.exp(-(X @ b)))
+        W = p * (1 - p)
+        H = X.T @ (X * W[:, None]) + pen
+        g = X.T @ (p - y) + pen @ b
+        step = np.linalg.solve(H, g)
+        b -= step
+        if np.abs(step).max() < 1e-7:
+            break
+    return b
+
+
+def calibrate(bt, min_rows=1500):
+    """Fit the correction layer on real outcomes, report honest out-of-sample accuracy, return coefficients."""
+    import numpy as np
+    if bt is None or len(bt) < min_rows:
+        log("calibration skipped: not enough past player-games yet", 0 if bt is None else len(bt))
+        return None
+    bt = bt.sort_values(["season", "week"]).reset_index(drop=True)
+    X, y = cal_matrix(bt), bt["y"].values.astype(float)
+    raw = 1 - np.exp(-bt["lam"].values)
+    # honest test: fit on the earlier 75% of weeks, score the latest 25%
+    keys = bt[["season", "week"]].drop_duplicates().values.tolist()
+    cut = keys[int(len(keys) * 0.75)]
+    tr_ = ((bt["season"] < cut[0]) | ((bt["season"] == cut[0]) & (bt["week"] < cut[1]))).values
+    b_tr = fit_logistic(X[tr_], y[tr_])
+    te = ~tr_
+    p_te = 1 / (1 + np.exp(-(X[te] @ b_tr)))
+
+    def ll(p, yy):
+        p = np.clip(p, 1e-4, 1 - 1e-4)
+        return float(-np.mean(yy * np.log(p) + (1 - yy) * np.log(1 - p)))
+
+    def brier(p, yy):
+        return float(np.mean((p - yy) ** 2))
+    b_all = fit_logistic(X, y)
+    cal_all = 1 / (1 + np.exp(-(X @ b_all)))
+    bins = []
+    edges = [0, .1, .2, .3, .4, .5, .6, .7, 1.01]
+    for lo, hi in zip(edges[:-1], edges[1:]):
+        mr, mc = (raw >= lo) & (raw < hi), (cal_all >= lo) & (cal_all < hi)
+        bins.append(dict(lo=lo, hi=min(hi, 1.0),
+                         raw_pred=round(float(raw[mr].mean()), 3) if mr.sum() else None,
+                         raw_act=round(float(y[mr].mean()), 3) if mr.sum() else None, raw_n=int(mr.sum()),
+                         cal_pred=round(float(cal_all[mc].mean()), 3) if mc.sum() else None,
+                         cal_act=round(float(y[mc].mean()), 3) if mc.sum() else None, cal_n=int(mc.sum())))
+    out = dict(features=CAL_FEATURES, coef=[round(float(v), 5) for v in b_all], n=int(len(bt)),
+               weeks=len(keys), test_n=int(te.sum()),
+               test_brier_raw=round(brier(raw[te], y[te]), 4), test_brier_cal=round(brier(p_te, y[te]), 4),
+               test_logloss_raw=round(ll(raw[te], y[te]), 4), test_logloss_cal=round(ll(p_te, y[te]), 4),
+               bins=bins)
+    log(f"calibration: {out['n']} player-games, test brier raw {out['test_brier_raw']} -> calibrated {out['test_brier_cal']}")
+    return out
+
+
 # ---------------------------------------------------------------- main
 def main():
     now = datetime.now(timezone.utc)
     season = int(os.environ.get("SEASON") or (now.year if now.month >= 8 else now.year - 1))
     log("season", season)
-    sched, pbp, rosters, teams_df, inj, depth, snaps = load_nflverse(season)
+    sched, pbp, rosters, teams_df, inj, depth, snaps, rosters_all = load_nflverse(season)
     depth_qbs = depth_starting_qbs(depth)
     overrides = load_overrides()
     week, games = upcoming_week(sched, season)
@@ -900,6 +1084,11 @@ def main():
     p_all, use, played = prep_pbp(pbp, season)
     rr, tr = td_rates(p_all)
     pt = player_table(use, rosters, rr, tr, season)
+    try:
+        calib = calibrate(backtest_rows(p_all, sched, rosters_all, rr, tr))
+    except Exception as e:  # never let calibration take down the daily update
+        log("calibration failed:", repr(e))
+        calib = None
     pt = blend_prior(pt, p_all, season, played)
     off, _, _, pr, rrk, dgames = team_tables(use, sched, season, teams_df)
     dvp = defense_vs_position(use, rosters, dgames, pr, rrk)
@@ -993,6 +1182,7 @@ def main():
         TEAMS=colors, OFF={k: v for k, v in off.items()}, DEF=dvp, GAMES=out_games, P=players, NUM=nums,
         PROPLINES=prop_out,
         SNAPS=build_snaps(snaps, season),
+        CALIB=calib,
         PICKS=grade_picks(load_picks(), prev, sched, pbp, rosters, snaps, season, now),
     )
     with open(OUT, "w") as f:
