@@ -542,7 +542,7 @@ nav.main a.on::after{display:none}
 </footer>
 <script>
 // ---------- Sample data ----------
-let META=null,PROPLINES={},LIVE=false,SNAPS=null,PICKS=null;
+let META=null,PROPLINES={},LIVE=false,SNAPS=null,PICKS=null,CALIB=null;
 let TEAMS={
  BUF:{n:"Buffalo Bills",c:"#2F6BFF"},KC:{n:"Kansas City Chiefs",c:"#E31837"},DET:{n:"Detroit Lions",c:"#0076B6"},
  GB:{n:"Green Bay Packers",c:"#FFB612"},PHI:{n:"Philadelphia Eagles",c:"#1FA39B"},DAL:{n:"Dallas Cowboys",c:"#869397"},
@@ -636,7 +636,14 @@ function tdModel(p){
   const kind=(p.pos==="WR"||p.pos==="TE")?"pass":"rush";
   const wx=wxTD(g,kind),form=1+p.trend*.04;
   const lam=teamTD*p.share*defAdj*wx*form;
-  return {g,opp,pts,teamTD,defAdj,wx,form,lam,prob:1-Math.exp(-lam)};
+  const raw=1-Math.exp(-lam);
+  let prob=raw;
+  if(CALIB&&CALIB.coef){
+    const f=[1,Math.log(Math.max(lam,1e-4)),p.pos==="RB"?1:0,p.pos==="WR"?1:0,p.pos==="TE"?1:0,Math.log1p(p.tgt||0),Math.log1p(p.rush||0)];
+    const z=f.reduce((a,v,i)=>a+v*CALIB.coef[i],0);
+    prob=1/(1+Math.exp(-z));
+  }
+  return {g,opp,pts,teamTD,defAdj,wx,form,lam,raw,prob};
 }
 function tdLabel(pr){return pr>=.45?"Elite":pr>=.33?"Strong":pr>=.22?"Solid":pr>=.14?"Long shot":"Dart throw"}
 function gradeOf(f){return f>=1.10?"A":f>=1.04?"B":f>=.97?"C":f>=.92?"D":"F"}
@@ -823,6 +830,8 @@ function cdHTML(kick,mode){
 }
 function tickCountdowns(){document.querySelectorAll(".cd[data-kick]").forEach(el=>{const h=cdHTML(el.dataset.kick,el.dataset.mode);if(el.innerHTML!==h)el.innerHTML=h})}
 setInterval(tickCountdowns,1000);
+// blend the model with the sportsbook (half each, on the log-odds scale); books build in about 8% margin on anytime TDs
+function marketBlend(p,implied){const fair=Math.min(.97,Math.max(.03,implied*.92)),lo=x=>Math.log(x/(1-x)),q=Math.min(.97,Math.max(.03,p));const z=.5*lo(q)+.5*lo(fair);return 1/(1+Math.exp(-z))}
 let rvI=0; const rv=()=>`rv" style="--i:${rvI++}`;
 
 // ---------- Views ----------
@@ -900,9 +909,10 @@ function tdRow(x,i){const m=x.m;return `<details class="card ${rv()}"><summary c
       <div class="pill ${pillCls(m.wx)}"><b>${mult(m.wx)}</b><span>Weather</span></div>
       <div class="pill ${pillCls(m.form)}"><b>${mult(m.form)}</b><span>Usage trend</span></div>
       <div class="pill"><b>${x.td}</b><span>TDs this season</span></div>
-      ${(PROPLINES[x.name]||{}).TD?(()=>{const b=PROPLINES[x.name].TD,ip=impl(b.price),e=m.prob-ip;return `<div class="pill"><b>${fmtOdds(b.price)}</b><span>Best odds (${b.book}), ${fmtPct(ip)} implied</span></div><div class="pill ${e>=0?"up":"down"}"><b>${e>=0?"+":""}${Math.round(e*100)}%</b><span>Model edge vs book</span></div>`})():""}
+      ${CALIB?`<div class="pill ${pillCls(m.prob/m.raw)}"><b>${m.prob>=m.raw?"+":"−"}${Math.abs(Math.round((m.prob-m.raw)*100))}%</b><span>Calibration vs real results</span></div>`:""}
+      ${(PROPLINES[x.name]||{}).TD?(()=>{const b=PROPLINES[x.name].TD,ip=impl(b.price),mk=marketBlend(m.prob,ip),e=mk-ip;return `<div class="pill"><b>${fmtOdds(b.price)}</b><span>Best odds (${b.book}), ${fmtPct(ip)} implied</span></div><div class="pill"><b>${fmtPct(mk)}</b><span>Model + market blend</span></div><div class="pill ${e>=0?"up":"down"}"><b>${e>=0?"+":""}${Math.round(e*100)}%</b><span>Edge vs book</span></div>`})():""}
     </div>
-    <div class="eq">${f1(m.teamTD)} × ${x.share.toFixed(2)} × ${m.defAdj.toFixed(2)} × ${m.wx.toFixed(2)} × ${m.form.toFixed(2)} = <code>${m.lam.toFixed(2)} expected TDs</code> = <code>${fmtPct(m.prob)}</code> chance to score. Rated ${tdLabel(m.prob).toLowerCase()}.</div>
+    <div class="eq">${f1(m.teamTD)} × ${x.share.toFixed(2)} × ${m.defAdj.toFixed(2)} × ${m.wx.toFixed(2)} × ${m.form.toFixed(2)} = <code>${m.lam.toFixed(2)} expected TDs</code> = ${CALIB?`${fmtPct(m.raw)} raw, calibrated against ${CALIB.n.toLocaleString()} past player-games to <code>${fmtPct(m.prob)}</code>`:`<code>${fmtPct(m.prob)}</code>`} chance to score. Rated ${tdLabel(m.prob).toLowerCase()}.</div>
   </div></details>`}
 function tdList(){
   const list=ALL.filter(x=>(tdState.pos==="All"||x.pos===tdState.pos)&&matchQ(x));
@@ -1060,6 +1070,35 @@ function viewRecord(){
   <p class="small" style="margin-top:14px">1 unit risked per pick unless noted. Parlay odds are the price posted at the sportsbook when the pick was made. For entertainment and information only; 21+. If gambling stops being fun, call 1-800-GAMBLER.</p>`;
 }
 
+// ---------- Model accuracy ----------
+function accuracySection(){
+  if(!CALIB||!CALIB.bins) return "";
+  const B=CALIB.bins.filter(b=>b.cal_n>=20||b.raw_n>=20);
+  const W=560,H=300,pad=58,x=v=>pad+v*(W-2*pad)/0.8,y=v=>H-pad-v*(H-2*pad)/0.8;
+  const pts=(k1,k2,col)=>B.filter(b=>b[k1]!=null&&b[k2]!=null).map(b=>`<circle cx="${x(Math.min(b[k1],.8))}" cy="${y(Math.min(b[k2],.8))}" r="7" fill="${col}" stroke="#05080F" stroke-width="2"/>`).join("");
+  const line=(k1,k2,col,dash)=>{const q=B.filter(b=>b[k1]!=null&&b[k2]!=null);return q.length>1?`<path d="${q.map((b,i)=>`${i?"L":"M"}${x(Math.min(b[k1],.8))} ${y(Math.min(b[k2],.8))}`).join("")}" fill="none" stroke="${col}" stroke-width="2.5" ${dash?'stroke-dasharray="5 5"':""}/>`:""};
+  const ticks=[0,.2,.4,.6,.8].map(v=>`<text x="${x(v)}" y="${H-pad+22}" text-anchor="middle" font-size="12" fill="#94A1B9">${v*100}%</text><text x="${pad-10}" y="${y(v)+4}" text-anchor="end" font-size="12" fill="#94A1B9">${v*100}%</text><line x1="${pad}" x2="${W-pad}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(255,255,255,.06)"/>`).join("");
+  const imp=Math.round(100*(1-CALIB.test_brier_cal/CALIB.test_brier_raw));
+  return `<h2 class="${rv()}">Model accuracy</h2>
+  <p class="lede ${rv()}">The touchdown model is tested against every past game: it re-runs each week using only what was known beforehand, then checks who actually scored. A correction layer is refit to those results every morning, so the model keeps learning from its misses.</p>
+  <div class="card ${rv()}" style="padding:18px 20px;margin-top:14px">
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:640px;height:auto;display:block" role="img" aria-label="Predicted versus actual touchdown rates">
+      ${ticks}
+      <line x1="${x(0)}" y1="${y(0)}" x2="${x(.8)}" y2="${y(.8)}" stroke="rgba(255,255,255,.35)" stroke-dasharray="4 6"/>
+      ${line("raw_pred","raw_act","#66728A",true)}${pts("raw_pred","raw_act","#66728A")}
+      ${line("cal_pred","cal_act","#FF8A3D",false)}${pts("cal_pred","cal_act","#FF6A2B")}
+      <text x="${W/2}" y="${H-6}" text-anchor="middle" font-size="12" fill="#94A1B9">Predicted chance to score</text>
+      <text x="14" y="${H/2}" text-anchor="middle" font-size="12" fill="#94A1B9" transform="rotate(-90 14 ${H/2})">Actually scored</text>
+    </svg>
+    <div class="pills" style="margin-top:12px">
+      <div class="pill"><b>${CALIB.n.toLocaleString()}</b><span>Past player-games tested</span></div>
+      <div class="pill"><b>${CALIB.weeks}</b><span>Weeks of history</span></div>
+      <div class="pill ${imp>0?"up":""}"><b>${imp>0?"+":""}${imp}%</b><span>Accuracy gain on held-out weeks</span></div>
+    </div>
+    <p class="small" style="margin:12px 0 0">Points on the dashed diagonal are perfectly calibrated. Gray is the raw formula, orange is after the correction layer. Accuracy gain compares prediction error (Brier score) on the most recent quarter of weeks, which the correction layer never saw while fitting.</p>
+  </div>`;
+}
+
 // ---------- Snap counts ----------
 function sampleSnaps(){
   // demo data built from the sample players so the prototype shows the layout
@@ -1178,6 +1217,7 @@ function viewMethod(){
     <div class="card ${rv()}"><h3>Player share</h3><p>His portion of team touchdown chances, weighted toward red-zone carries and targets.</p></div>
     <div class="card ${rv()}"><h3>Adjustments</h3><p>The opponent's touchdowns allowed to his position, wind and rain, and whether his role is growing.</p></div>
   </div>
+  ${accuracySection()}
   <h2 class="${rv()}">Prop model</h2>
   <div class="formula ${rv()}">Volume = plays × pass or run rate × target or carry share</div>
   <div class="formula ${rv()}">Projection = volume × efficiency × defense × weather × venue × role</div>
@@ -1273,7 +1313,7 @@ async function loadLive(){
     if(!res||!res.ok) return false;
     const d=await res.json();
     if(!d||!d.GAMES||!d.GAMES.length||!d.P||!d.P.length) return false;
-    META=d.meta;TEAMS=d.TEAMS;OFF=d.OFF;DEF=d.DEF;GAMES=d.GAMES;P=d.P;PROPLINES=d.PROPLINES||{};SNAPS=d.SNAPS||null;PICKS=d.PICKS||null;NUM=Object.assign({},NUM,d.NUM||{});
+    META=d.meta;TEAMS=d.TEAMS;OFF=d.OFF;DEF=d.DEF;GAMES=d.GAMES;P=d.P;PROPLINES=d.PROPLINES||{};SNAPS=d.SNAPS||null;PICKS=d.PICKS||null;CALIB=d.CALIB||null;NUM=Object.assign({},NUM,d.NUM||{});
     P=P.filter(p=>TEAMS[p.team]&&OFF[p.team]&&gameOf(p.team));
     return true;
   }catch(e){return false}
