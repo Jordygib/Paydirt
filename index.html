@@ -126,7 +126,7 @@ a.card:hover,.lift:hover{border-color:var(--line2);transform:translateY(-2px)}
 .field::after{content:"";position:absolute;right:0;top:0;bottom:0;width:10%;border-radius:0 999px 999px 0;background:repeating-linear-gradient(135deg,var(--accent-soft) 0 4px,transparent 4px 8px);border-left:2px solid var(--accent)}
 .field .run{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:linear-gradient(90deg,rgba(52,210,127,.6),var(--turf) 45%,var(--accent2) 85%,var(--accent));transform-origin:left center;z-index:1;animation:drive 1s cubic-bezier(.2,.8,.2,1) both}
 .field .ball{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,var(--accent2) 35%,var(--accent) 70%);box-shadow:0 0 0 3px var(--surface),0 0 16px 2px var(--glow);z-index:2;animation:pop 1s cubic-bezier(.2,.8,.2,1) both}
-.field.lg{height:16px}
+.field.lgs{height:16px}
 .field.lg .ball{width:22px;height:22px;margin:-11px 0 0 -11px}
 @keyframes drive{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes pop{0%,55%{opacity:0;transform:scale(.3)}100%{opacity:1;transform:scale(1)}}
@@ -148,7 +148,7 @@ a.card:hover,.lift:hover{border-color:var(--line2);transform:translateY(-2px)}
 .av .jn{position:relative;z-index:1;font-family:var(--display);font-weight:900;font-size:21px;line-height:1;margin-top:-4px;letter-spacing:-.5px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .shield{flex:none;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45))}
 .mu .helmet{margin:0 -2px}
-.av.lg{width:64px;height:64px;border-radius:18px}
+.av.lgs{width:64px;height:64px;border-radius:18px}
 .av.lg .jn{font-size:34px;margin-top:-6px}
 .av.lg::after{bottom:9px;height:7px}
 .who{display:flex;align-items:center;gap:12px;min-width:0}
@@ -397,7 +397,7 @@ nav.main a.on::after{display:none}
              linear-gradient(45deg,transparent 11.8px,rgba(255,255,255,.22) 11.8px,rgba(255,255,255,.22) 13.4px,transparent 13.4px) bottom left/28px 28px no-repeat}
 .fact,.pill,.step,.cd-unit{border-radius:2px;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)}
 .av{border-radius:4px;clip-path:polygon(0 0,calc(100% - 9px) 0,100% 9px,100% 100%,9px 100%,0 calc(100% - 9px))}
-.av.lg{clip-path:polygon(0 0,calc(100% - 13px) 0,100% 13px,100% 100%,13px 100%,0 calc(100% - 13px))}
+.av.lgs{clip-path:polygon(0 0,calc(100% - 13px) 0,100% 13px,100% 100%,13px 100%,0 calc(100% - 13px))}
 
 /* slanted controls */
 .seg{border-radius:0;padding:3px 10px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
@@ -470,6 +470,15 @@ nav.main a.on::after{display:none}
 .sf-in strong{color:var(--ink)}
 .sf-brand{font-family:var(--display);font-style:italic;font-weight:900;font-size:22px;color:var(--ink)}
 .sf-brand b{color:var(--accent);margin-left:5px}
+.mates{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.mates a{display:flex;align-items:center;gap:10px;padding:10px 12px;text-decoration:none;background:var(--surface);border:1px solid var(--line);clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)}
+.mates a:hover{border-color:var(--line2)}
+.mates span{font-weight:700;line-height:1.2}.mates small{display:block;font-weight:500;color:var(--muted);font-size:12.5px}
+.pl{color:inherit;text-decoration:none}.pl:hover{color:var(--accent)}
+.plink{color:var(--accent);font-weight:700;text-decoration:none}
+.sf-nav{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px}
+.sf-nav a{color:var(--muted);text-decoration:none;font-weight:600}
+.sf-nav a:hover{color:var(--accent)}
 .sf-legal{font-size:12.5px;color:var(--faint)}
 
 /* picks of the week + record */
@@ -491,8 +500,8 @@ nav.main a.on::after{display:none}
 .legs .lt em{font-style:normal;font-weight:700;color:var(--accent2)}
 .legs .lt small{display:block;font-size:12px;color:var(--muted)}
 .legs .lo{font-family:var(--display);font-style:italic;font-weight:700;color:var(--muted)}
-.lg{flex:none;width:22px;height:22px;display:grid;place-items:center;font-size:12px;font-weight:900;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
-.lg.win{background:var(--turf);color:#04210F}.lg.loss{background:#FF5A5A;color:#2A0505}.lg.push{background:var(--raise);color:var(--muted)}.lg.pend{background:var(--raise);color:var(--accent2);animation:pulse 1.6s ease-in-out infinite}
+.lgs{flex:none;width:22px;height:22px;display:grid;place-items:center;font-size:12px;font-weight:900;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.lgs.win{background:var(--turf);color:#04210F}.lgs.loss{background:#FF5A5A;color:#2A0505}.lgs.push{background:var(--raise);color:var(--muted)}.lgs.pend{background:var(--raise);color:var(--accent2);animation:pulse 1.6s ease-in-out infinite}
 .bet-f{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
 .rtag{font-family:var(--display);font-style:italic;font-weight:900;font-size:15px;text-transform:uppercase;padding:3px 12px;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
 .rtag.win{background:var(--turf);color:#04210F}.rtag.loss{background:#FF5A5A;color:#2A0505}.rtag.pend,.rtag.push{background:var(--raise);color:var(--muted)}
@@ -516,18 +525,18 @@ nav.main a.on::after{display:none}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFA14A"/><stop offset="1" stop-color="#FF6A2B"/></linearGradient></defs></svg>
 <header class="top">
   <div class="bar">
-    <a class="brand" href="#/slate" aria-label="TD Signal home">
+    <a class="brand" href="/" aria-label="TD Signal home">
       <svg viewBox="0 0 36 28" aria-hidden="true"><rect x="1" y="1" width="13" height="26" rx="2.5" fill="#FF6A2B"/><path d="M1 17L14 9.5V13.5L1 21Z" fill="#fff" opacity=".9"/><path class="sig s1" d="M19 8.5a8 8 0 0 1 0 11" fill="none" stroke="#FF6A2B" stroke-width="2.6" stroke-linecap="round"/><path class="sig s2" d="M24 4.5a13.5 13.5 0 0 1 0 19" fill="none" stroke="#FF6A2B" stroke-width="2.6" stroke-linecap="round"/><path class="sig s3" d="M29 1.5a18.5 18.5 0 0 1 0 25" fill="none" stroke="#FF6A2B" stroke-width="2.6" stroke-linecap="round"/></svg>
       <span>TD<b>SIGNAL</b></span>
     </a>
     <nav class="main" id="nav">
-      <a href="#/slate" data-r="slate">Slate</a>
-      <a href="#/td" data-r="td">TD model</a>
-      <a href="#/props" data-r="props">Props</a>
-      <a href="#/snaps" data-r="snaps">Snap counts</a>
-      <a href="#/record" data-r="record">My record</a>
-      <a href="#/defense" data-r="defense">Defenses</a>
-      <a href="#/method" data-r="method">How it works</a>
+      <a href="/" data-r="slate">Slate</a>
+      <a href="/td-model/" data-r="td">TD model</a>
+      <a href="/props/" data-r="props">Props</a>
+      <a href="/snap-counts/" data-r="snaps">Snap counts</a>
+      <a href="/record/" data-r="record">My record</a>
+      <a href="/defenses/" data-r="defense">Defenses</a>
+      <a href="/how-it-works/" data-r="method">How it works</a>
     </nav>
   </div>
   <div class="tickwrap"><span class="tlabel"><i></i>Top plays</span><div class="ticker" id="ticker"></div></div>
@@ -537,6 +546,7 @@ nav.main a.on::after{display:none}
   <div class="sf-in">
     <div class="sf-brand">TD<b>SIGNAL</b></div>
     <p><strong>NFL anytime touchdown predictions and player prop projections for every game.</strong> TD Signal estimates each player's chance to score from red-zone usage, game script, defensive matchups, and weather, then builds passing, rushing, and receiving projections step by step. Snap counts, defense-versus-position rankings, kickoff weather, and a fully graded record of our weekly parlay and prop picks are updated daily throughout the NFL season.</p>
+    <nav class="sf-nav" id="footNav"><a href="/" data-r="slate">Week slate</a><a href="/td-model/" data-r="td">Anytime TD odds</a><a href="/props/" data-r="props">Player props</a><a href="/snap-counts/" data-r="snaps">Snap counts</a><a href="/defenses/" data-r="defense">Defense vs position</a><a href="/record/" data-r="record">Picks record</a><a href="/how-it-works/" data-r="method">How it works</a></nav>
     <p class="sf-legal">For entertainment and information only. Must be 21+ to bet. Gambling problem? Call 1-800-GAMBLER. TD Signal is not affiliated with the NFL or any team.</p>
   </div>
 </footer>
@@ -795,7 +805,7 @@ function field(prob,lg){
   return `<div class="field ${lg?"lg":""}" role="img" aria-label="${fmtPct(prob)} touchdown chance"><div class="run" style="width:${pos}%"></div><div class="ball" style="left:${pos}%"></div></div>${yards}`;
 }
 function ring(p){const C=2*Math.PI*26;return `<div class="ring" role="img" aria-label="${fmtPct(p)} chance"><svg viewBox="0 0 62 62"><circle class="bgc" cx="31" cy="31" r="26" fill="none" stroke-width="6"/><circle class="fg" cx="31" cy="31" r="26" fill="none" stroke-width="6" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" data-off="${C*(1-p)}"/></svg><b>${Math.round(p*100)}%</b></div>`}
-const count=(v,dec=0,suf="")=>`<span data-to="${v}" data-dec="${dec}" data-suf="${suf}">${(0).toFixed(dec)}${suf}</span>`;
+const count=(v,dec=0,suf="")=>window.__PRERENDER?`<span>${(+v).toFixed(dec)}${suf}</span>`:`<span data-to="${v}" data-dec="${dec}" data-suf="${suf}">${(0).toFixed(dec)}${suf}</span>`;
 const ICONS={
   wind:'<path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 12h16a3 3 0 1 1-3 3"/><path d="M3 16h8"/>',
   rain:'<path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 9a4 4 0 0 1-1 7.9H7z"/><path d="M8 19l-1 2M12 19l-1 2M16 19l-1 2"/>',
@@ -832,19 +842,19 @@ function tickCountdowns(){document.querySelectorAll(".cd[data-kick]").forEach(el
 setInterval(tickCountdowns,1000);
 // blend the model with the sportsbook (half each, on the log-odds scale); books build in about 8% margin on anytime TDs
 function marketBlend(p,implied){const fair=Math.min(.97,Math.max(.03,implied*.92)),lo=x=>Math.log(x/(1-x)),q=Math.min(.97,Math.max(.03,p));const z=.5*lo(q)+.5*lo(fair);return 1/(1+Math.exp(-z))}
-let rvI=0; const rv=()=>`rv" style="--i:${rvI++}`;
+let rvI=0; const rv=()=>`rv" data-i="${rvI++}`;
 
 // ---------- Views ----------
 function ticker(){
-  const items=[...ALL.slice(0,8).map(x=>`<a href="#/game/${x.m.g.id}"><b>${x.name}</b>anytime TD<span>${fmtPct(x.m.prob)}</span></a>`),
-    ...PROPS.filter(r=>r.grade==="A").slice(0,6).map(r=>`<a href="#/props"><b>${r.p.name}</b>${r.stat.toLowerCase()} proj<span>${fmtVal(r.proj,r.kind)}</span></a>`)];
+  const items=[...ALL.slice(0,8).map(x=>`<a href="${linkTo("player/"+slug(x.name))}"><b>${x.name}</b>anytime TD<span>${fmtPct(x.m.prob)}</span></a>`),
+    ...PROPS.filter(r=>r.grade==="A").slice(0,6).map(r=>`<a href="${linkTo("player/"+slug(r.p.name))}"><b>${r.p.name}</b>${r.stat.toLowerCase()} proj<span>${fmtVal(r.proj,r.kind)}</span></a>`)];
   return `<div class="track">${items.join("")}${items.join("")}</div>`;
 }
 function viewSlate(){
   const a=ALL[0],m=a.m;
   const rows=GAMES.map(g=>{
     const im=wxImpact(g),best=ALL.find(x=>x.m.g===g);
-    return `<a class="card ${rv()}" href="#/game/${g.id}"><div class="gr">
+    return `<a class="card ${rv()}" href="${linkTo("game/"+g.id)}"><div class="gr">
       <div class="time">${g.time.replace(" ET","")}<small>${g.day.split(",")[0]} ET</small>${cd(g,"short")}</div>
       <div class="bug"><span class="slab" style="--tc:${TEAMS[g.away].c}">${shield(g.away,44)}<b>${g.away}</b><span class="sc">${f1(implied(g,g.away))}</span></span><span class="at">@</span><span class="slab" style="--tc:${TEAMS[g.home].c}">${shield(g.home,44,true)}<b>${g.home}</b><span class="sc">${f1(implied(g,g.home))}</span></span></div>
       <div class="wxp">${icon(wxIcon(g))}<div>${g.wx.indoor?"Indoors":g.wx.temp==="--"?"Weather":`${g.wx.temp}°, ${g.wx.wind} mph`}<div class="small ${im.lvl}">${im.txt}</div></div></div>
@@ -853,9 +863,9 @@ function viewSlate(){
   return `<h1 class="${rv()}" data-ghost="Sunday">Week ${META?META.week:6}</h1>
   <p class="lede ${rv()}">Touchdown odds and prop projections for every game, built from pace, game script, matchups, and weather.</p>
   <div class="sample ${rv()}"><i></i>${LIVE?`Live data, updated ${new Date(META.updated).toLocaleString([], {weekday:"short",hour:"numeric",minute:"2-digit"})}. Lines from ${META.oddsSource}.`:"Prototype running on sample data"}</div>
-  ${(()=>{const n=nextGame();return n?`<a class="card nextko ${rv()}" href="#/game/${n.id}"><div class="nk-l"><span class="nk-t">Next kickoff</span><span class="nk-m">${shield(n.away,40)}<b>${n.away}</b><span class="at">at</span>${shield(n.home,40,true)}<b>${n.home}</b></span><span class="small">${n.day}, ${n.time}</span></div><div class="cd-clockwrap">${cd(n,"clock")}</div></a>`:""})()}
+  ${(()=>{const n=nextGame();return n?`<a class="card nextko ${rv()}" href="${linkTo("game/"+n.id)}"><div class="nk-l"><span class="nk-t">Next kickoff</span><span class="nk-m">${shield(n.away,40)}<b>${n.away}</b><span class="at">at</span>${shield(n.home,40,true)}<b>${n.home}</b></span><span class="small">${n.day}, ${n.time}</span></div><div class="cd-clockwrap">${cd(n,"clock")}</div></a>`:""})()}
   ${picksCard()}
-  <a class="card feature ${rv()}" href="#/game/${m.g.id}">
+  <a class="card feature ${rv()}" href="${linkTo("player/"+slug(a.name))}">
     <span class="bignum" aria-hidden="true">${NUM[a.name]??""}</span>
     <svg class="play" viewBox="0 0 300 200" aria-hidden="true"><defs><marker id="arw" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fff"/></marker></defs>
       <g fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
@@ -900,7 +910,8 @@ function tdRow(x,i){const m=x.m;return `<details class="card ${rv()}"><summary c
     <span class="who">${av(x)}<span class="nm">${x.name}<small>${x.pos}, ${x.team} vs ${m.opp}${x.inj?", questionable":""}</small>${x.role?`<small class="role">${esc(x.role)}</small>`:""}</span></span>
     <span class="fieldcell">${field(m.prob)}</span>
     <span class="pc ${m.prob>=.4?"hot":""}">${fmtPct(m.prob)}</span>
-  </summary><div class="open">
+  </summary><div class="open">${tdDetail(x)}<p class="small" style="margin:12px 0 0"><a class="plink" href="${linkTo("player/"+slug(x.name))}">Full ${esc(x.name)} page</a></p></div></details>`}
+function tdDetail(x){const m=x.m;return `
     <div class="pills">
       <div class="pill"><b>${f1(m.pts)}</b><span>Projected team points</span></div>
       <div class="pill"><b>${f1(m.teamTD)}</b><span>Expected team TDs</span></div>
@@ -913,7 +924,7 @@ function tdRow(x,i){const m=x.m;return `<details class="card ${rv()}"><summary c
       ${(PROPLINES[x.name]||{}).TD?(()=>{const b=PROPLINES[x.name].TD,ip=impl(b.price),mk=marketBlend(m.prob,ip),e=mk-ip;return `<div class="pill"><b>${fmtOdds(b.price)}</b><span>Best odds (${b.book}), ${fmtPct(ip)} implied</span></div><div class="pill"><b>${fmtPct(mk)}</b><span>Model + market blend</span></div><div class="pill ${e>=0?"up":"down"}"><b>${e>=0?"+":""}${Math.round(e*100)}%</b><span>Edge vs book</span></div>`})():""}
     </div>
     <div class="eq">${f1(m.teamTD)} × ${x.share.toFixed(2)} × ${m.defAdj.toFixed(2)} × ${m.wx.toFixed(2)} × ${m.form.toFixed(2)} = <code>${m.lam.toFixed(2)} expected TDs</code> = ${CALIB?`${fmtPct(m.raw)} raw, calibrated against ${CALIB.n.toLocaleString()} past player-games to <code>${fmtPct(m.prob)}</code>`:`<code>${fmtPct(m.prob)}</code>`} chance to score. Rated ${tdLabel(m.prob).toLowerCase()}.</div>
-  </div></details>`}
+  `}
 function tdList(){
   const list=ALL.filter(x=>(tdState.pos==="All"||x.pos===tdState.pos)&&matchQ(x));
   return list.length?list.map(tdRow).join(""):emptyMsg();
@@ -1010,7 +1021,7 @@ function legText(l){
   if(m.includes("total")) return `${who} game <em>${(l.side||"over").toLowerCase()} ${l.line}</em> pts`;
   return `${who} <em>${(l.side||"over").toLowerCase()} ${l.line}</em> ${MKT_UNIT[m]||esc(l.market)}`;
 }
-const STAT_ICON={win:'<span class="lg win">✓</span>',loss:'<span class="lg loss">✕</span>',push:'<span class="lg push">P</span>',void:'<span class="lg push">V</span>',pending:'<span class="lg pend">●</span>',unknown:'<span class="lg push">?</span>',review:'<span class="lg push">?</span>'};
+const STAT_ICON={win:'<span class="lgs win">✓</span>',loss:'<span class="lgs loss">✕</span>',push:'<span class="lgs push">P</span>',void:'<span class="lgs push">V</span>',pending:'<span class="lgs pend">●</span>',unknown:'<span class="lgs push">?</span>',review:'<span class="lgs push">?</span>'};
 function resultTag(b){
   if(b.result==="pending") return `<span class="rtag pend">${b.kick&&Date.parse(b.kick)<Date.now()?"In play":"Pending"}</span>`;
   if(b.result==="win") return `<span class="rtag win">Hit +${b.profit.toFixed(2)}u</span>`;
@@ -1028,7 +1039,7 @@ function picksCard(){
   const D=picksData();
   if(!D) return `<div class="card picks ${rv()}"><div class="picks-h"><span class="nk-t">Picks of the week</span></div><p class="small" style="margin:8px 0 0">This week's parlay and prop drop before Sunday. Check back soon.</p></div>`;
   const w=D.weeks[0], R=D.record;
-  return `<a class="card picks ${rv()}" href="#/record">
+  return `<a class="card picks ${rv()}" href="${linkTo("record")}">
     <div class="picks-h"><span class="nk-t">Picks of the week${D.sample?" (sample)":""}</span><span class="small">Week ${w.week}</span>
       <span class="recs"><span>Parlays <b>${recLine(R.parlay)}</b> <i class="${R.parlay.units>=0?"up":"down"}">${unitsTxt(R.parlay.units)}</i></span><span>Props <b>${recLine(R.prop)}</b> <i class="${R.prop.units>=0?"up":"down"}">${unitsTxt(R.prop.units)}</i></span></span></div>
     <div class="bets">${w.parlay?betBlock(w.parlay,"Parlay of the week","par"):""}${w.prop?betBlock(w.prop,"Prop of the week","pro"):""}</div>
@@ -1181,14 +1192,14 @@ function viewDefense(){
 }
 
 function viewGame(id){
-  const g=GAMES.find(x=>x.id===id); if(!g) return `<div class="empty"><h1>Game not found</h1><p><a href="#/slate">Back to the slate</a></p></div>`;
+  const g=GAMES.find(x=>x.id===id); if(!g) return `<div class="empty"><h1>Game not found</h1><p><a href="${linkTo("slate")}">Back to the slate</a></p></div>`;
   const im=wxImpact(g),pa=implied(g,g.away),ph=implied(g,g.home);
-  const side=t=>`<div class="card mini ${rv()}"><div class="mh">${shield(t,40)}<h3>${TEAMS[t].n}</h3></div>${ALL.filter(x=>x.team===t).map(x=>`<div class="mr"><span class="who">${av(x)}<span class="nm">${x.name}<small>${x.pos}</small></span></span>${field(x.m.prob)}<span class="pc ${x.m.prob>=.4?"hot":""}">${fmtPct(x.m.prob)}</span></div>`).join("")}</div>`;
+  const side=t=>`<div class="card mini ${rv()}"><div class="mh">${shield(t,40)}<h3>${TEAMS[t].n}</h3></div>${ALL.filter(x=>x.team===t).map(x=>`<div class="mr"><span class="who">${av(x)}<span class="nm"><a class="pl" href="${linkTo("player/"+slug(x.name))}">${x.name}</a><small>${x.pos}</small></span></span>${field(x.m.prob)}<span class="pc ${x.m.prob>=.4?"hot":""}">${fmtPct(x.m.prob)}</span></div>`).join("")}</div>`;
   const ca=teamCtx(g.away);
   const cond=[["stadium",g.st.name,g.st.city||g.st.roof],["grass",g.st.surface,g.st.roof.split(",")[0].split(" (")[0]],
     ["temp",g.wx.indoor?"72°F":g.wx.temp+"°F","Temperature"],["wind",g.wx.indoor?"0 mph":`${g.wx.wind} mph ${g.wx.dir}`,"Wind"],
     ["drop",g.wx.precip+"%","Rain chance"],["stadium",f1(ca.plays),"Projected plays per team"]];
-  return `<a class="back" href="#/slate"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>Slate</a>
+  return `<a class="back" href="${linkTo("slate")}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>Slate</a>
   <div class="card gh ${rv()}"><div class="wash" style="--ca:${TEAMS[g.away].c};--ch:${TEAMS[g.home].c}"></div>
     <div class="gh-row">
       <div class="side-t">${shield(g.away,92)}<span class="ab">${g.away}</span><span class="full">${TEAMS[g.away].n}</span><span class="pt">${count(pa,1)}<small>projected</small></span></div>
@@ -1273,14 +1284,114 @@ document.addEventListener("pointermove",e=>{
   const r=c.getBoundingClientRect();c.style.setProperty("--mx",(e.clientX-r.left)+"px");c.style.setProperty("--my",(e.clientY-r.top)+"px");
 });
 
+
+// ---------- URLs: real paths on tdsignal.app, hash links elsewhere (previews, local files) ----------
+const SITE="https://tdsignal.app";
+const PATHMODE=/(^|\.)tdsignal\.app$|github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
+const slug=n=>String(n||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/['.]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const wkNum=()=>META?META.week:6;
+const SECTION_PATHS={slate:"/",td:"/td-model/",props:"/props/",snaps:"/snap-counts/",defense:"/defenses/",method:"/how-it-works/",record:"/record/"};
+function routeToPath(route){
+  const i=route.indexOf("/"),r=i<0?route:route.slice(0,i),a=i<0?"":route.slice(i+1);
+  if(r==="game"){const g=GAMES.find(x=>x.id===a);return g?`/week-${wkNum()}/${g.away.toLowerCase()}-at-${g.home.toLowerCase()}/`:"/"}
+  if(r==="player") return `/players/${a}/`;
+  return SECTION_PATHS[r]||"/";
+}
+function pathToRoute(path){
+  path=path.replace(/index\.html$/,""); if(!path.endsWith("/")) path+="/";
+  for(const [k,v] of Object.entries(SECTION_PATHS)) if(v===path) return k;
+  let m=path.match(/^\/week-\d+\/([a-z]+)-at-([a-z]+)\/$/);
+  if(m){const g=GAMES.find(x=>x.away.toLowerCase()===m[1]&&x.home.toLowerCase()===m[2]);return "game/"+(g?g.id:"none")}
+  m=path.match(/^\/players\/([a-z0-9-]+)\/$/); if(m) return "player/"+m[1];
+  return "slate";
+}
+const linkTo=route=>PATHMODE?routeToPath(route):"#/"+route;
+function currentRoute(){
+  if(location.hash.startsWith("#/")){const r=location.hash.slice(2)||"slate";if(PATHMODE) history.replaceState(null,"",routeToPath(r));return r}
+  return PATHMODE?pathToRoute(location.pathname):"slate";
+}
+window.__go=route=>{if(PATHMODE) history.replaceState(null,"",routeToPath(route));render()};
+function setMeta(route){
+  const i=route.indexOf("/"),r=i<0?route:route.slice(i===-1?0:0,i<0?undefined:i),a=i<0?"":route.slice(i+1),wk=wkNum();
+  let t,d;
+  if(r==="player"){const x=ALL.find(p=>slug(p.name)===a);
+    if(x){t=`${x.name} Anytime TD Odds & Prediction (Week ${wk}) | TD Signal`;
+      const pr=PROPS.filter(q=>q.p.name===x.name).map(q=>`${q.stat.toLowerCase()} ${fmtVal(q.proj,q.kind)}`).join(", ");
+      d=`${x.name} has a ${fmtPct(x.m.prob)} chance to score a touchdown vs ${TEAMS[x.m.opp]?TEAMS[x.m.opp].n:x.m.opp} in Week ${wk}, per TD Signal's model.${pr?` Projections: ${pr}.`:""} Matchup, weather and snap counts.`}
+    else{t=`Player not found | TD Signal`;d="This player isn't on this week's TD Signal board."}}
+  else if(r==="game"){const g=GAMES.find(x=>x.id===a);
+    if(g){const top=ALL.filter(x=>x.m.g===g).slice(0,3).map(x=>`${x.name} ${fmtPct(x.m.prob)}`).join(", ");
+      t=`${TEAMS[g.away].n} vs ${TEAMS[g.home].n} TD Scorer Picks & Props (Week ${wk}) | TD Signal`;
+      d=`Anytime touchdown odds and player prop projections for ${TEAMS[g.away].n} at ${TEAMS[g.home].n}, Week ${wk}. Top TD chances: ${top}. Weather, stadium and defense matchups.`}
+    else{t="Game not found | TD Signal";d="This game isn't on this week's slate."}}
+  else{const M={slate:[`NFL Anytime Touchdown Predictions & Prop Picks (Week ${wk}) | TD Signal`,`Free NFL anytime touchdown predictions and prop projections for every Week ${wk} game. Each player's TD chance, matchup grades, snap counts and weather, updated daily.`],
+    td:[`NFL Anytime TD Odds & Predictions, Week ${wk} | TD Signal`,`Every player's chance to score a touchdown in Week ${wk}, built from red-zone usage, game script, defense and weather. Calibrated against thousands of past games.`],
+    props:[`NFL Player Prop Projections, Week ${wk} | TD Signal`,`Passing, rushing, receiving yards and receptions projections for every Week ${wk} game, with the step-by-step math and matchup grades.`],
+    snaps:[`NFL Snap Counts by Team & Position (Week ${wk}) | TD Signal`,`Weekly offensive and defensive snap share for every NFL player, with trends showing whose role is growing or shrinking.`],
+    defense:[`NFL Defense vs Position Rankings, Week ${wk} | TD Signal`,`Touchdowns allowed to RBs, WRs, TEs and QBs by every NFL defense versus league average, plus yardage and red zone rankings.`],
+    record:[`Weekly NFL Parlay & Prop Picks Record | TD Signal`,`Every TD Signal parlay and prop of the week, graded automatically from official stats. Wins and losses, units and ROI.`],
+    method:[`How the TD Signal Model Works | TD Signal`,`The math behind TD Signal's NFL touchdown and player prop models, and how they're tested against real results.`]};
+    [t,d]=M[r]||M.slate}
+  const url=SITE+(r==="slate"?"/":routeToPath(route));
+  document.title=t;
+  const set=(sel,attr,val)=>{const el=document.querySelector(sel);if(el) el.setAttribute(attr,val)};
+  set('meta[name="description"]',"content",d);set('link[rel="canonical"]',"href",url);
+  set('meta[property="og:url"]',"content",url);set('meta[property="og:title"]',"content",t);set('meta[property="og:description"]',"content",d);
+  set('meta[name="twitter:title"]',"content",t);set('meta[name="twitter:description"]',"content",d);
+}
+document.addEventListener("click",e=>{
+  if(!PATHMODE||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
+  const a=e.target.closest("a[href]"); if(!a||a.target) return;
+  const h=a.getAttribute("href"); if(!h||!h.startsWith("/")||h.startsWith("//")) return;
+  e.preventDefault(); history.pushState(null,"",h); render(); window.scrollTo(0,0);
+});
+window.addEventListener("popstate",()=>render());
+
+// ---------- Player page ----------
+function viewPlayer(s){
+  const x=ALL.find(p=>slug(p.name)===s);
+  if(!x) return `<div class="empty"><h1 class="${rv()}">Player not found</h1><p class="lede ${rv()}">This player isn't on this week's board. He may be injured, on a bye, or no longer in a featured role.</p><p class="${rv()}"><a href="${linkTo("td")}">See every player's TD chance</a></p></div>`;
+  const m=x.m,g=m.g,wk=wkNum(),opp=TEAMS[m.opp]?TEAMS[m.opp].n:m.opp;
+  const props=PROPS.filter(r=>r.p.name===x.name);
+  const mates=ALL.filter(p=>p.team===x.team&&p.name!==x.name);
+  const rank=ALL.findIndex(p=>p.name===x.name)+1;
+  let snapRow="";
+  if(SNAPS&&SNAPS.teams&&SNAPS.teams[x.team]){
+    const r=SNAPS.teams[x.team].find(q=>qnorm(q[0])===qnorm(x.name)||qnorm(q[0]).startsWith(qnorm(x.name))||qnorm(x.name).startsWith(qnorm(q[0])));
+    if(r){const by=new Set((SNAPS.byes||{})[x.team]||[]);
+      snapRow=`<h2 class="${rv()}">Snap share</h2><div class="card scroll ${rv()}"><table class="snaps"><thead><tr>${SNAPS.weeks.map(w=>`<th class="c">Wk ${w}</th>`).join("")}</tr></thead><tbody><tr>${SNAPS.weeks.map((w,i)=>snapCell(r[3][i],r[4][i],by.has(w))).join("")}</tr></tbody></table></div>`}}
+  const propLine=props.map(r=>`${r.stat.toLowerCase()} ${fmtVal(r.proj,r.kind)}`).join(", ");
+  const wxLine=g.wx.indoor?"indoors":g.wx.temp==="--"?"with the forecast still pending":`in ${g.wx.temp}°F with ${g.wx.wind} mph wind`;
+  return `<a class="back" href="${linkTo("game/"+g.id)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>${g.away} at ${g.home}</a>
+  <div class="card feature ${rv()}" style="margin-top:0">
+    <span class="bignum" aria-hidden="true">${NUM[x.name]??""}</span>
+    <span class="badge">${x.pos}, ${TEAMS[x.team].n}</span>
+    <div class="f-main">
+      <div class="who">${av(x,true)}<div><h1 class="f-name" style="font-size:clamp(38px,6vw,62px)">${x.name}</h1><div class="f-meta">Anytime TD prediction, Week ${wk} vs ${opp}${x.inj?", questionable":""}</div>${x.role?`<div class="f-meta" style="color:var(--turf);font-weight:700">${esc(x.role)}</div>`:""}</div></div>
+      <div class="f-pct">${count(Math.round(m.prob*100))}<small>%</small></div>
+    </div>
+    <div style="width:100%">${field(m.prob,true)}</div>
+  </div>
+  <p class="lede ${rv()}" style="max-width:75ch">${x.name} has a <b>${fmtPct(m.prob)}</b> chance to score a touchdown against ${opp} in Week ${wk}, the ${rank}${["th","st","nd","rd"][(rank%100>10&&rank%100<14)?0:Math.min(rank%10,4)%4]||"th"} highest on this week's board. ${TEAMS[x.team].n} are projected for ${f1(m.pts)} points ${wxLine}.${propLine?` The model projects ${propLine}.`:""}</p>
+  <h2 class="${rv()}">Touchdown breakdown</h2>
+  <div class="card ${rv()}"><div style="padding:18px 22px 26px 28px">${tdDetail(x)}</div></div>
+  ${props.length?`<h2 class="${rv()}">Player props</h2><div class="list">${props.map(propRow).join("")}</div>`:""}
+  ${snapRow}
+  <h2 class="${rv()}">The matchup</h2>
+  <a class="card ${rv()}" href="${linkTo("game/"+g.id)}" style="display:block;padding:16px 20px;text-decoration:none"><b>${TEAMS[g.away].n} at ${TEAMS[g.home].n}</b><div class="small">${g.day}, ${g.time}. ${g.st.name}. Full game breakdown, every player's TD chance and props.</div></a>
+  ${mates.length?`<h2 class="${rv()}">More ${TEAMS[x.team].n}</h2><div class="mates ${rv()}">${mates.map(p=>`<a href="${linkTo("player/"+slug(p.name))}">${av(p)}<span>${p.name}<small>${p.pos}, ${fmtPct(p.m.prob)} TD</small></span></a>`).join("")}</div>`:""}`;
+}
+
 // ---------- Router ----------
 function render(){
   rvI=0;
-  const h=location.hash.replace(/^#\/?/,"")||"slate";
-  const [r,arg]=h.split("/");
-  const views={slate:viewSlate,td:viewTD,props:viewProps,defense:viewDefense,method:viewMethod,snaps:viewSnaps,record:viewRecord,game:()=>viewGame(arg)};
+  const h=currentRoute();
+  const i=h.indexOf("/"),r=i<0?h:h.slice(0,i),arg=i<0?"":h.slice(i+1);
+  const views={slate:viewSlate,td:viewTD,props:viewProps,defense:viewDefense,method:viewMethod,snaps:viewSnaps,record:viewRecord,game:()=>viewGame(arg),player:()=>viewPlayer(arg)};
   document.getElementById("app").innerHTML=(views[r]||viewSlate)();
-  document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("on",a.dataset.r===r||(r==="game"&&a.dataset.r==="slate")||(!views[r]&&a.dataset.r==="slate")));
+  document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("on",a.dataset.r===r||((r==="game"||r==="player")&&a.dataset.r==="slate")||(!views[r]&&a.dataset.r==="slate")));
+  setMeta(views[r]?h:"slate");
+  document.querySelectorAll("#app [data-i]").forEach(el=>el.style.setProperty("--i",el.dataset.i));
   animateCounts();animateRings();bind();tickCountdowns();
 }
 function bind(){
@@ -1301,13 +1412,13 @@ function bind(){
   document.querySelectorAll("#statSeg button").forEach(b=>b.onclick=()=>{propState.stat=b.dataset.stat;render()});
   document.querySelectorAll("#sortSeg button").forEach(b=>b.onclick=()=>{propState.sort=b.dataset.sort;render()});
 }
-(()=>{const d=document.getElementById("dust");let h="";for(let i=0;i<28;i++){const s=(Math.random()*2.2+1).toFixed(1);h+=`<span class="dust" style="left:${(Math.random()*100).toFixed(1)}%;--s:${s}px;--d:${(14+Math.random()*16).toFixed(1)}s;--dl:-${(Math.random()*30).toFixed(1)}s;--x:${(Math.random()*120-60)|0}px;--o:${(.25+Math.random()*.5).toFixed(2)}"></span>`}d.outerHTML=h})();
+(()=>{const d=document.getElementById("dust");if(!d)return;let h="";for(let i=0;i<28;i++){const s=(Math.random()*2.2+1).toFixed(1);h+=`<span class="dust" style="left:${(Math.random()*100).toFixed(1)}%;--s:${s}px;--d:${(14+Math.random()*16).toFixed(1)}s;--dl:-${(Math.random()*30).toFixed(1)}s;--x:${(Math.random()*120-60)|0}px;--o:${(.25+Math.random()*.5).toFixed(2)}"></span>`}d.outerHTML=h})();
 let spotRaf=0;document.addEventListener("pointermove",e=>{if(spotRaf)return;spotRaf=requestAnimationFrame(()=>{spotRaf=0;const r=document.documentElement.style;r.setProperty("--sx",e.clientX+"px");r.setProperty("--sy",e.clientY+"px")})});
 async function loadLive(){
   try{
     const ctl=new AbortController();setTimeout(()=>ctl.abort(),4000);
     let res=null;
-    for(const url of ["data.json","https://jordygib.github.io/Paydirt/data.json"]){
+    for(const url of ["/data.json","data.json","https://tdsignal.app/data.json"]){
       try{res=await fetch(url,{cache:"no-store",signal:ctl.signal});if(res.ok)break;}catch(e){res=null}
     }
     if(!res||!res.ok) return false;
@@ -1323,9 +1434,12 @@ async function boot(){
   ALL=P.map(p=>({...p,m:tdModel(p)})).sort((a,b)=>b.m.prob-a.m.prob);
   PROPS=P.flatMap(propsFor);
   document.getElementById("ticker").innerHTML=ticker();
+  document.querySelectorAll("#nav a[data-r],#footNav a[data-r]").forEach(a=>a.setAttribute("href",linkTo(a.dataset.r)));
+  document.querySelector(".brand").setAttribute("href",linkTo("slate"));
   render();
+  window.__ready=true;
 }
-window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0)});
+if(!PATHMODE) window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0)});
 boot();
 </script>
 </body>
