@@ -4,7 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<title>TD Signal | NFL Anytime Touchdown Predictions & Prop Picks</title>
+<title>NFL Anytime Touchdown Predictions & Prop Picks | TD Signal</title>
+<meta name="description" content="Free NFL anytime touchdown predictions and prop projections for every game. See each player's TD chance, matchup grades, snap counts, and weather, updated daily.">
+<link rel="canonical" href="https://tdsignal.app/">
+<meta name="theme-color" content="#05080F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 28'%3E%3Crect x='1' y='1' width='13' height='26' rx='2.5' fill='%23FF6A2B'/%3E%3Cpath d='M1 17L14 9.5V13.5L1 21Z' fill='%23fff'/%3E%3Cpath d='M19 8.5a8 8 0 0 1 0 11M24 4.5a13.5 13.5 0 0 1 0 19M29 1.5a18.5 18.5 0 0 1 0 25' fill='none' stroke='%23FF6A2B' stroke-width='2.8' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="og-image.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TD Signal">
+<meta property="og:url" content="https://tdsignal.app/">
+<meta property="og:title" content="NFL Anytime Touchdown Predictions & Prop Picks | TD Signal">
+<meta property="og:description" content="Free NFL anytime touchdown predictions and prop projections for every game. See each player's TD chance, matchup grades, snap counts, and weather, updated daily.">
+<meta property="og:image" content="https://tdsignal.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NFL Anytime Touchdown Predictions & Prop Picks | TD Signal">
+<meta name="twitter:description" content="Free NFL anytime touchdown predictions and prop projections for every game. See each player's TD chance, matchup grades, snap counts, and weather, updated daily.">
+<meta name="twitter:image" content="https://tdsignal.app/og-image.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"TD Signal","url":"https://tdsignal.app/","description":"Free NFL anytime touchdown predictions and prop projections for every game. See each player's TD chance, matchup grades, snap counts, and weather, updated daily."}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -431,6 +449,15 @@ nav.main a.on::after{display:none}
 .gh .wash{opacity:1}
 .gh::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:repeating-linear-gradient(115deg,rgba(255,255,255,.025) 0 2px,transparent 2px 14px)}
 
+/* site footer */
+.site-foot{position:relative;z-index:1;border-top:1px solid var(--line);margin-top:20px;background:rgba(5,8,15,.6)}
+.sf-in{max-width:1100px;margin:0 auto;padding:30px 22px 40px;color:var(--muted);font-size:14px}
+.sf-in p{max-width:80ch;margin:10px 0 0}
+.sf-in strong{color:var(--ink)}
+.sf-brand{font-family:var(--display);font-style:italic;font-weight:900;font-size:22px;color:var(--ink)}
+.sf-brand b{color:var(--accent);margin-left:5px}
+.sf-legal{font-size:12.5px;color:var(--faint)}
+
 /* picks of the week + record */
 .picks{display:block;margin-top:16px;padding:18px 22px;text-decoration:none;background:linear-gradient(100deg,rgba(255,106,43,.12),transparent 50%),var(--surface)}
 .picks-h{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
@@ -492,6 +519,13 @@ nav.main a.on::after{display:none}
   <div class="tickwrap"><span class="tlabel"><i></i>Top plays</span><div class="ticker" id="ticker"></div></div>
 </header>
 <main id="app"></main>
+<footer class="site-foot">
+  <div class="sf-in">
+    <div class="sf-brand">TD<b>SIGNAL</b></div>
+    <p><strong>NFL anytime touchdown predictions and player prop projections for every game.</strong> TD Signal estimates each player's chance to score from red-zone usage, game script, defensive matchups, and weather, then builds passing, rushing, and receiving projections step by step. Snap counts, defense-versus-position rankings, kickoff weather, and a fully graded record of our weekly parlay and prop picks are updated daily throughout the NFL season.</p>
+    <p class="sf-legal">For entertainment and information only. Must be 21+ to bet. Gambling problem? Call 1-800-GAMBLER. TD Signal is not affiliated with the NFL or any team.</p>
+  </div>
+</footer>
 <script>
 // ---------- Sample data ----------
 let META=null,PROPLINES={},LIVE=false,SNAPS=null,PICKS=null;
