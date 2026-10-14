@@ -421,7 +421,21 @@ nav.main a.on::after{display:none}
 .slab .sc{flex:none;min-width:54px;padding:5px 12px;text-align:center;background:#03050A;color:var(--ink);font-family:var(--display);font-style:italic;font-weight:800;font-size:20px;line-height:1;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
 .bug .at{flex:none;font-family:var(--display);font-style:italic;font-weight:900;font-size:18px;color:var(--faint)}
 .thr em{font-size:24px}
-@media (max-width:760px){.gr .bug{grid-column:1/-1;order:-1}.slab{max-width:none}.slab b{font-size:24px}}
+@media (max-width:760px){
+  .gr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:14px;row-gap:12px;padding:14px 14px 16px}
+  .gr .bug{grid-column:1/-1;order:-1;gap:6px}
+  .slab{max-width:none;padding:4px 4px 4px 9px;gap:4px}
+  .slab .helmet{width:34px;height:28px}
+  .slab b{font-size:22px}
+  .slab .sc{min-width:42px;padding:4px 8px;font-size:16px}
+  .bug .at{font-size:14px}
+  .gr .time{grid-column:1;font-size:22px}
+  .wxp{grid-column:2;white-space:normal;font-size:13px;align-items:flex-start}
+  .wxp svg{margin-top:2px}
+  .thr{grid-column:1/-1;display:flex;align-items:baseline;gap:8px;text-align:left;border-top:1px solid var(--line);padding-top:10px}
+  .thr b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .thr em{font-size:22px}
+}
 
 .who .nm{font-family:var(--display);font-style:italic;font-weight:800;font-size:18px;text-transform:uppercase;letter-spacing:.2px}
 .who .nm small{font-family:var(--body);font-style:normal;text-transform:none;letter-spacing:0;font-size:13px}
