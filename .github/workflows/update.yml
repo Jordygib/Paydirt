@@ -52,6 +52,13 @@ jobs:
           git add data.json || true
           git diff --staged --quiet || (git commit -m "Update data" && git push)
 
+      - name: Pre-render pages for search engines
+        continue-on-error: true   # if this fails, the site still publishes as a normal app
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+          python scripts/prerender.py
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
