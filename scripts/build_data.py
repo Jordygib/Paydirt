@@ -451,9 +451,14 @@ def pick_players(pt, teams_playing, injuries, depth_qbs, overrides):
             qb = qbs[qbs["id"] == depth_qbs[team]].head(1)
         else:
             qb = qbs.sort_values(["att_last", "att3", "att"], ascending=False).head(1)
-        rb = t[t["pos"] == "RB"].sort_values(["use3", "rush"], ascending=False).head(2)
-        wr = t[t["pos"] == "WR"].sort_values(["use3", "tgt"], ascending=False).head(3)
-        te = t[t["pos"] == "TE"].sort_values(["use3", "tgt"], ascending=False).head(1)
+        # every player with a real role: the core starters always, plus depth players who've seen
+        # meaningful work lately (at least 3 carries + targets over the last 3 games)
+        def depth(pos, key, core, cap):
+            g = t[t["pos"] == pos].sort_values(["use3", key], ascending=False).head(cap).reset_index(drop=True)
+            return g[(g.index < core) | (g["use3"] >= 3)]
+        rb = depth("RB", "rush", 2, 3)
+        wr = depth("WR", "tgt", 3, 5)
+        te = depth("TE", "tgt", 1, 3)
         picked = pd.concat([qb, rb, wr, te])
         out.append(picked[picked["use3"] + picked["att3"] > 0])
     return pd.concat(out) if out else pt.iloc[0:0]
