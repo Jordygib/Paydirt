@@ -1356,6 +1356,28 @@ document.addEventListener("click",e=>{
   e.preventDefault(); history.pushState(null,"",h); render(); window.scrollTo(0,0);
 });
 window.addEventListener("popstate",()=>render());
+// Touchscreens: act on the tap ourselves when the finger lifts. iPhone Safari cancels clicks if anything on
+// the page changes during a tap (our countdowns and animations always are), which made taps "do nothing".
+let tapStart=null;
+document.addEventListener("touchstart",e=>{
+  if(e.touches.length!==1){tapStart=null;return}
+  const t=e.touches[0];tapStart={x:t.clientX,y:t.clientY,time:Date.now(),el:e.target};
+},{passive:true});
+document.addEventListener("touchmove",e=>{
+  if(!tapStart) return;const t=e.touches[0];
+  if(Math.hypot(t.clientX-tapStart.x,t.clientY-tapStart.y)>10) tapStart=null;   // it's a scroll, not a tap
+},{passive:true});
+document.addEventListener("touchend",e=>{
+  const st=tapStart;tapStart=null;
+  if(!st||Date.now()-st.time>600||!st.el||!st.el.closest) return;                   // long press: leave it alone
+  const t=e.changedTouches[0];
+  const field=st.el.closest("input,textarea,select")||(st.el.closest("label")&&st.el.closest("label").querySelector("input,textarea,select"));
+  if(field){ if(document.activeElement!==field){e.preventDefault();field.focus()} return }
+  const target=st.el.closest("a[href],button,summary");
+  if(!target) return;
+  e.preventDefault();   // skip Safari's own click, which it may cancel
+  target.dispatchEvent(new MouseEvent("click",{bubbles:true,cancelable:true,view:window,clientX:t.clientX,clientY:t.clientY}));
+},{passive:false});
 
 // ---------- Player page ----------
 function viewPlayer(s){
