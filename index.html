@@ -452,6 +452,18 @@ nav.main a.on::after{display:none}
 .gh .wash{opacity:1}
 .gh::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:repeating-linear-gradient(115deg,rgba(255,255,255,.025) 0 2px,transparent 2px 14px)}
 
+/* top play record */
+.tprec{display:inline-flex;align-items:baseline;gap:6px;margin-left:10px;padding:4px 12px;font-size:13px;font-weight:700;color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--line);clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%)}
+.tprec b{font-family:var(--display);font-style:italic;font-weight:900;font-size:17px;color:var(--ink)}
+.tplast{display:inline-block;margin-left:10px;font-size:13px;font-weight:600;color:var(--muted)}
+.tplast.win{color:var(--turf)}.tplast.loss{color:#FF5A5A}
+.tprow{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}
+.tprow:last-child{border-bottom:0}
+.tprow .wkl{width:72px;font-family:var(--display);font-style:italic;font-weight:900;text-transform:uppercase}
+.tprow .lt{flex:1;min-width:0;font-weight:700}
+.tprow .lt small{display:block;font-weight:500;color:var(--muted);font-size:12.5px}
+@media (max-width:600px){.tplast{display:block;margin:8px 0 0}}
+
 /* site footer */
 .site-foot{position:relative;z-index:1;border-top:1px solid var(--line);margin-top:20px;background:rgba(5,8,15,.6)}
 .sf-in{max-width:1100px;margin:0 auto;padding:30px 22px 40px;color:var(--muted);font-size:14px}
@@ -561,7 +573,7 @@ html{-webkit-tap-highlight-color:rgba(255,106,43,.15)}
 </footer>
 <script>
 // ---------- Sample data ----------
-let META=null,PROPLINES={},LIVE=false,SNAPS=null,PICKS=null,CALIB=null;
+let META=null,PROPLINES={},LIVE=false,SNAPS=null,PICKS=null,CALIB=null,TOPPLAY=null;
 let TEAMS={
  BUF:{n:"Buffalo Bills",c:"#2F6BFF"},KC:{n:"Kansas City Chiefs",c:"#E31837"},DET:{n:"Detroit Lions",c:"#0076B6"},
  GB:{n:"Green Bay Packers",c:"#FFB612"},PHI:{n:"Philadelphia Eagles",c:"#1FA39B"},DAL:{n:"Dallas Cowboys",c:"#869397"},
@@ -859,8 +871,18 @@ function ticker(){
     ...PROPS.filter(r=>r.grade==="A").slice(0,6).map(r=>`<a href="${linkTo("player/"+slug(r.p.name))}"><b>${r.p.name}</b>${r.stat.toLowerCase()} proj<span>${fmtVal(r.proj,r.kind)}</span></a>`)];
   return `<div class="track">${items.join("")}${items.join("")}</div>`;
 }
+// the top play shown on the slate: this week's tracked pick (locked at his kickoff), else the model's #1
+function topPlayPlayer(){
+  const wk=META?META.week:null,cur=TOPPLAY&&TOPPLAY.history?TOPPLAY.history.find(h=>h.week===wk&&(!META||h.season===META.season)):null;
+  return (cur&&ALL.find(x=>x.name===cur.name))||ALL[0];
+}
+function topPlayRecord(){
+  if(!TOPPLAY||!TOPPLAY.record) return "";
+  const R2=TOPPLAY.record,last=(TOPPLAY.history||[]).find(h=>h.result==="win"||h.result==="loss");
+  return `<span class="tprec"><b>${R2.w}-${R2.l}</b> season</span>${last?`<span class="tplast ${last.result}">Week ${last.week}: ${esc(last.name)} ${last.result==="win"?"✓ scored":"✕ no TD"}</span>`:""}`;
+}
 function viewSlate(){
-  const a=ALL[0],m=a.m;
+  const a=topPlayPlayer(),m=a.m;
   const rows=GAMES.map(g=>{
     const im=wxImpact(g),best=ALL.find(x=>x.m.g===g);
     return `<a class="card ${rv()}" href="${linkTo("game/"+g.id)}"><div class="gr">
@@ -887,7 +909,7 @@ function viewSlate(){
         <path d="M14 108H290" stroke-dasharray="4 6" stroke-width="1.4" opacity=".7"/>
       </g></svg>
     <span class="glint" aria-hidden="true"></span>
-    <span class="badge">${icon("flame").replace('<svg','<svg width="13" height="13"')}Top touchdown play</span>
+    <span class="badge">${icon("flame").replace('<svg','<svg width="13" height="13"')}Top touchdown play</span>${topPlayRecord()}
     <div class="f-main">
       <div class="who">${av(a,true)}<div><div class="f-name">${a.name}</div><div class="f-meta">${a.pos}, ${TEAMS[a.team].n} vs ${TEAMS[m.opp].n}</div></div></div>
       <div class="f-pct">${count(Math.round(m.prob*100))}<small>%</small></div>
@@ -1085,6 +1107,8 @@ function viewRecord(){
     ${tile(`${n?((tot/n)*100).toFixed(1):"0.0"}%`,"ROI on every unit risked",tot>=0?"up":"down")}
   </div>
   <div class="card ${rv()}" style="padding:16px 18px;margin-top:14px"><div class="nk-t" style="margin-bottom:4px">Units over time</div>${unitsChart(D.weeks)||'<p class="small">The chart appears after two graded weeks.</p>'}</div>
+  ${TOPPLAY&&TOPPLAY.history&&TOPPLAY.history.length?`<h2 class="${rv()}">Top touchdown play <small>${TOPPLAY.record.w}-${TOPPLAY.record.l} this season</small></h2>
+  <div class="card ${rv()}"><div style="padding:6px 20px 10px">${TOPPLAY.history.map(h=>`<div class="tprow"><span class="wkl">Week ${h.week}</span><span class="lt"><a class="pl" href="${linkTo("player/"+slug(h.name))}">${esc(h.name)}</a><small>${h.prob?fmtPct(h.prob)+" model chance":""}${h.detail?`, ${esc(h.detail)}`:""}</small></span>${h.result==="win"?'<span class="rtag win">Hit</span>':h.result==="loss"?'<span class="rtag loss">Miss</span>':h.result==="void"?'<span class="rtag push">Void</span>':'<span class="rtag pend">Pending</span>'}</div>`).join("")}</div></div>`:""}
   <h2 class="${rv()}">Week by week</h2>
   <div class="wlist">${D.weeks.map(w=>`<div class="card wk ${rv()}"><div class="wk-h"><b>Week ${w.week}</b>${w.posted?`<span class="small">Posted ${new Date(w.posted).toLocaleString([], {weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span>`:""}</div><div class="bets">${w.parlay?betBlock(w.parlay,"Parlay","par"):""}${w.prop?betBlock(w.prop,"Prop","pro"):""}</div></div>`).join("")}</div>
   <p class="small" style="margin-top:14px">1 unit risked per pick unless noted. Parlay odds are the price posted at the sportsbook when the pick was made. For entertainment and information only; 21+. If gambling stops being fun, call 1-800-GAMBLER.</p>`;
@@ -1456,7 +1480,7 @@ async function loadLive(){
     if(!res||!res.ok) return false;
     const d=await res.json();
     if(!d||!d.GAMES||!d.GAMES.length||!d.P||!d.P.length) return false;
-    META=d.meta;TEAMS=d.TEAMS;OFF=d.OFF;DEF=d.DEF;GAMES=d.GAMES;P=d.P;PROPLINES=d.PROPLINES||{};SNAPS=d.SNAPS||null;PICKS=d.PICKS||null;CALIB=d.CALIB||null;NUM=Object.assign({},NUM,d.NUM||{});
+    META=d.meta;TEAMS=d.TEAMS;OFF=d.OFF;DEF=d.DEF;GAMES=d.GAMES;P=d.P;PROPLINES=d.PROPLINES||{};SNAPS=d.SNAPS||null;PICKS=d.PICKS||null;CALIB=d.CALIB||null;TOPPLAY=d.TOPPLAY||null;NUM=Object.assign({},NUM,d.NUM||{});
     P=P.filter(p=>TEAMS[p.team]&&OFF[p.team]&&gameOf(p.team));
     return true;
   }catch(e){return false}
