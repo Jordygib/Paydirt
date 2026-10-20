@@ -1072,6 +1072,99 @@ def calibrate(bt, min_rows=1500):
     return out
 
 
+
+# ---------------------------------------------------------------- top touchdown play: tracked and graded
+# Weeks before tracking began. Each one is still graded from the official stats, not taken on faith.
+SEED_TOP_PLAYS = [
+    {"season": 2026, "week": 6, "name": "Javonte Williams", "team": "DAL", "prob": 0.70},
+]
+
+
+def model_td_prob(p, game, dvp, calib):
+    """The same anytime-TD math the website runs (including the calibration layer), so the pipeline
+    knows exactly which player the site shows as the top touchdown play."""
+    import math
+    team, home = p["team"], game["home"]
+    pts = game["total"] / 2 - game["spread"] / 2 if team == home else game["total"] / 2 + game["spread"] / 2
+    opp = game["away"] if team == home else home
+    k = "qb" if p["pos"] == "QB" else p["pos"].lower()
+    d = (dvp.get(opp) or {}).get(k, 1.0)
+    def_adj = 1 + (d - 1) * 0.7
+    wx = 1.0
+    w = game.get("wx") or {}
+    if not w.get("indoor"):
+        passing = p["pos"] in ("WR", "TE")
+        wind = float(w.get("wind") or 0)
+        if wind >= 20:
+            wx *= 0.88 if passing else 1.05
+        elif wind >= 15:
+            wx *= 0.92 if passing else 1.03
+        if float(w.get("precip") or 0) >= 50:
+            wx *= 0.96 if passing else 1.02
+    lam = pts * TD_PER_POINT * p["share"] * def_adj * wx * (1 + p.get("trend", 0) * 0.04)
+    prob = 1 - math.exp(-lam)
+    if calib and calib.get("coef"):
+        f = [1, math.log(max(lam, 1e-4)), p["pos"] == "RB", p["pos"] == "WR", p["pos"] == "TE",
+             math.log1p(p.get("tgt") or 0), math.log1p(p.get("rush") or 0)]
+        z = sum(float(a) * float(b) for a, b in zip(f, calib["coef"]))
+        prob = 1 / (1 + math.exp(-z))
+    return prob
+
+
+def track_top_play(players, games, dvp, calib, prev, sched, pbp, rosters, snaps, season, week, now):
+    hist = [dict(h) for h in (((prev or {}).get("TOPPLAY") or {}).get("history") or [])]
+    have = {(h["season"], h["week"]) for h in hist}
+    for sd in SEED_TOP_PLAYS:
+        if (sd["season"], sd["week"]) not in have:
+            hist.append(dict(sd, locked=True, result="pending"))
+    # this week's top play: follows the model until his game kicks off, then locks
+    by_team = {}
+    for g in games:
+        by_team[g["away"]] = g
+        by_team[g["home"]] = g
+    ranked = sorted(((model_td_prob(p, by_team[p["team"]], dvp, calib), p) for p in players if p["team"] in by_team),
+                    key=lambda x: -x[0])
+    cur = next((h for h in hist if h["season"] == season and h["week"] == week), None)
+    if ranked and not (cur and cur.get("locked")):
+        prob, p = ranked[0]
+        kick = by_team[p["team"]].get("kick")
+        entry = {"season": season, "week": week, "name": p["name"], "team": p["team"], "prob": round(prob, 3),
+                 "kick": kick, "locked": bool(kick and now >= datetime.fromisoformat(kick)), "result": "pending"}
+        if cur:
+            cur.clear()
+            cur.update(entry)
+        else:
+            hist.append(entry)
+    # grade every week whose result isn't in yet
+    ros = rosters.drop_duplicates("gsis_id")
+    name_id = {norm_name(n): i for n, i in zip(ros["full_name"], ros["gsis_id"])}
+    name_team = {norm_name(n): t for n, t in zip(ros["full_name"], ros["team"])}
+    snapped = defaultdict(set)
+    if snaps is not None and not snaps.empty and "game_id" in snaps.columns:
+        for _, r in snaps[pd.to_numeric(snaps.get("offense_snaps", 0), errors="coerce").fillna(0) > 0].iterrows():
+            snapped[str(r["game_id"])].add(norm_name(r["player"]))
+    for h in hist:
+        if h.get("result") not in (None, "pending"):
+            continue
+        ctx = dict(sched=sched, season=h["season"], week=h["week"], name_team=name_team, name_id=name_id, pbp=pbp,
+                   snapped=snapped)
+        status, detail = grade_leg({"player": h["name"], "team": h.get("team"), "market": "Anytime TD"}, ctx)
+        if status in ("win", "loss", "void"):
+            h["result"], h["detail"] = status, detail
+    hist.sort(key=lambda h: (h["season"], h["week"]), reverse=True)
+    done = [h for h in hist if h["season"] == season and h.get("result") in ("win", "loss")]
+    return {"history": hist, "record": {"w": sum(h["result"] == "win" for h in done),
+                                        "l": sum(h["result"] == "loss" for h in done)}}
+
+
+def safe_top_play(*a):
+    try:
+        return track_top_play(*a)
+    except Exception as e:  # never let this take down the daily update
+        log("top play tracking failed:", repr(e))
+        return None
+
+
 # ---------------------------------------------------------------- main
 def main():
     now = datetime.now(timezone.utc)
@@ -1189,6 +1282,7 @@ def main():
         SNAPS=build_snaps(snaps, season),
         CALIB=calib,
         PICKS=grade_picks(load_picks(), prev, sched, pbp, rosters, snaps, season, now),
+        TOPPLAY=safe_top_play(players, out_games, dvp, calib, prev, sched, pbp, rosters, snaps, season, int(week), now),
     )
     with open(OUT, "w") as f:
         json.dump(data, f, separators=(",", ":"), default=float)
